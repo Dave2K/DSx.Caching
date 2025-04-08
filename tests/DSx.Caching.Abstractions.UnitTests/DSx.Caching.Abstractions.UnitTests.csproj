@@ -13,7 +13,7 @@
          Viene gestito automaticamente da Directory.Build.props -->
 	</PropertyGroup>
 	<ItemGroup>
-	  <PackageReference Include="FluentAssertions" />
+	  <PackageReference Include="FluentAssertions" Version="8.2.0" />
 	</ItemGroup>
 
 	<!-- DIPENDENZE DEL PROGETTO -->
