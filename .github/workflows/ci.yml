@@ -10,7 +10,7 @@ on:
 
 jobs:
   test:
-    runs-on: windows-latest  # Usa Ubuntu per eseguire il codice
+    runs-on: ubuntu-latest  # Usa Ubuntu per eseguire il codice
 
     steps:
       # Step 1: Checkout del codice
@@ -23,14 +23,18 @@ jobs:
         with:
           dotnet-version: '9.0'  # Imposta .NET SDK versione 9.0
 
-      # Step 3: Ripristina le dipendenze
+      # Step 3: Display .NET SDK version
+      - name: Display .NET SDK version
+        run: dotnet --info
+
+      # Step 4: Ripristina le dipendenze
       - name: Restore dependencies
         run: dotnet restore
 
-      # Step 4: Costruisci il progetto
+      # Step 5: Costruisci il progetto
       - name: Build the project
         run: dotnet build --configuration Release
 
-      # Step 5: Esegui i test
+      # Step 6: Esegui i test
       - name: Run unit tests
         run: dotnet test --configuration Release
