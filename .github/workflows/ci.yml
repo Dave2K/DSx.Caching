@@ -28,15 +28,15 @@ jobs:
         run: dotnet --info
 
       # Step 4: Display platform name
-      - name: Display platform name
-        run: |
-          if [ "$(uname)" == "Darwin" ]; then
-            echo "macOS"
-          elif [ "$(uname)" == "Linux" ]; then
-            echo "Linux"
-          elif [ "$(uname)" == "Windows_NT" ]; then
-            echo "Windows"
-          fi
+      #- name: Display platform name
+      #  run: |
+      #    if [ "$(uname)" == "Darwin" ]; then
+      #      echo "macOS"
+      #    elif [ "$(uname)" == "Linux" ]; then
+      #      echo "Linux"
+      #    elif [ "$(uname)" == "Windows_NT" ]; then
+      #      echo "Windows"
+      #    fi
 
       # Step 5: Ripristina le dipendenze
       - name: Restore dependencies
