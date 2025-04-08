@@ -2,7 +2,6 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <!-- CORE LIBRARIES -->
-    <PackageVersion Include="FluentAssertions" Version="8.2.0" />
     <PackageVersion Include="FluentValidation" Version="11.9.1" />
     <!-- Validazione avanzata -->
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0" />
@@ -26,7 +25,7 @@
     <!-- Integrazione Visual Studio -->
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <!-- Code coverage -->
-    <!--<PackageVersion Include="FluentAssertions" Version="8.2.0" />-->
+    <PackageVersion Include="FluentAssertions" Version="8.2.0" />
     <!-- Asserzioni leggibili -->
   </ItemGroup>
 </Project>
