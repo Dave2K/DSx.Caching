@@ -18,7 +18,7 @@
 		<!-- Libreria di mocking -->
 		<PackageReference Include="coverlet.collector"/>
 		<!-- Strumento code coverage -->
-		<PackageReference Include="FluentAssertions"/>
+		<!--<PackageReference Include="FluentAssertions"/>-->
 		<!-- Asserzioni avanzate -->
 	</ItemGroup>
 </Project>
