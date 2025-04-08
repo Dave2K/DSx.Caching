@@ -21,7 +21,7 @@ jobs:
       - name: Set up .NET SDK
         uses: actions/setup-dotnet@v3
         with:
-          dotnet-version: '9.0'  # Imposta .NET SDK versione 9.0
+          dotnet-version: '8.0'  # Imposta .NET SDK versione 9.0
 
       # Step 3: Ripristina le dipendenze
       - name: Restore dependencies
