@@ -1,0 +1,10 @@
+# Ignora le cartelle di Visual Studio 2022
+.vs2019/
+.vs2017/
+.vs/
+
+# Ignora la cartella di Visual Studio Code
+.vscode/
+
+# Ignora file del progetto
+temp/

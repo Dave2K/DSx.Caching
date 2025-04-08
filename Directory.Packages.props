@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<!-- ABILITA GESTIONE CENTRALIZZATA DELLE VERSIONI -->
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- CORE LIBRARIES -->
+	
+		<PackageVersion Include="FluentValidation" Version="11.9.1" />
+		<!-- Validazione avanzata -->
+		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.0"/>
+		<!-- Cache in memoria -->
+
+		<!-- DEPENDENCY INJECTION & LOGGING -->
+		<PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0"/>
+		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0"/>
+
+		<!-- HEALTH CHECK -->
+		<PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.0"/>
+
+		<!-- REDIS INTEGRATION -->
+		<PackageVersion Include="StackExchange.Redis" Version="2.8.31"/>
+		<!-- Client Redis -->
+
+		<!-- TESTING ESSENTIALS -->
+		<PackageVersion Include="xunit" Version="2.6.1"/>
+		<!-- Framework di testing -->
+		<PackageVersion Include="Moq" Version="4.20.70"/>
+		<!-- Mocking -->
+		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0"/>
+		<!-- SDK per test -->
+		<PackageVersion Include="xunit.runner.visualstudio" Version="2.5.1"/>
+		<!-- Integrazione Visual Studio -->
+		<PackageVersion Include="coverlet.collector" Version="6.0.4"/>
+		<!-- Code coverage -->
+		<PackageVersion Include="FluentAssertions" Version="8.2.0"/>
+		<!-- Asserzioni leggibili -->
+	</ItemGroup>
+</Project>

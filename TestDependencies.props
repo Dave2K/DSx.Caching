@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<ItemGroup>
+
+		<!-- TESTING PACKAGES (VERSIONI GESTITE DA Directory.Packages.props) -->
+		<PackageReference Include="Microsoft.NET.Test.Sdk"/>
+		<!-- SDK per l'esecuzione dei test -->
+		<PackageReference Include="xunit"/>
+		<!-- Framework xUnit -->
+		<PackageReference Include="xunit.runner.visualstudio">
+			<!-- Runner per Visual Studio -->
+			<PrivateAssets>all</PrivateAssets>
+			<!-- Nasconde il pacchetto dai progetti referenziati -->
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+			<!-- Assets inclusi -->
+		</PackageReference>
+		<PackageReference Include="Moq"/>
+		<!-- Libreria di mocking -->
+		<PackageReference Include="coverlet.collector"/>
+		<!-- Strumento code coverage -->
+		<PackageReference Include="FluentAssertions"/>
+		<!-- Asserzioni avanzate -->
+
+		<!-- GLOBAL USING DIRECTIVES -->
+		<Using Include="Xunit" />
+		<!-- Abilita [Fact], [Theory] senza "using" -->
+		<Using Include="Moq" />
+		<!-- Abilita "new Mock<T>()" direttamente -->
+	</ItemGroup>
+</Project>

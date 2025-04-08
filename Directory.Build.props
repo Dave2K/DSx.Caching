@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>
+		<!-- Definizione del percorso principale della Workspace -->
+		<WorkspacePath>$(MSBuildThisFileDirectory)</WorkspacePath>
+		
+		<!-- Percorsi per risorse e file temporanei -->
+		<WorkspaceBuildPath>$(WorkspacePath)artifacts\</WorkspaceBuildPath>
+		<WorkspaceArtifactsPath>$(WorkspacePath)artifacts\</WorkspaceArtifactsPath>
+		<WorkspaceTempPath>$(WorkspacePath)temp\</WorkspaceTempPath>
+		<WorkspaceResourcesPath>$(WorkspacePath)Resources\</WorkspaceResourcesPath>
+
+
+		<!-- Configurazioni di compilazione -->
+		<OutputPath>$(WorkspaceArtifactsPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+		<BaseIntermediateOutputPath>$(WorkspaceTempPath)$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+		<IntermediateOutputPath>$(BaseIntermediateOutputPath)obj\$(Configuration)\</IntermediateOutputPath>
+
+		<!-- Importa impostazioni di progetto globali -->
+		<!--<Import Project="DotNetSettings.props" />-->
+		
+
+		<!-- .NET CORE SETTINGS -->
+		<TargetFramework>net9.0</TargetFramework>
+		<!-- Framework di destinazione -->
+		<Nullable>enable</Nullable>
+		<!-- Nullable Reference Types abilitati -->
+		<ImplicitUsings>enable</ImplicitUsings>
+		<!-- Usings impliciti (System, Collections.Generic, ecc.) -->
+		<LangVersion>latest</LangVersion>
+		<!-- Versione C# più recente -->
+
+		<!-- DOCUMENTAZIONE -->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- Genera documentazione XML -->
+		<WarningsAsErrors>CS1591</WarningsAsErrors>
+		<!-- Warning documentazione = errore -->
+
+		<!-- PACCHETTI -->
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<!-- Gestione centralizzata versioni NuGet -->
+
+		<!-- RILEVAZIONE PROGETTI DI TEST -->
+		<IsTestProject Condition="$(MSBuildProjectDirectory.Contains('tests'))">true</IsTestProject>
+		<!-- Progetto di test se il percorso contiene "tests" -->
+	</PropertyGroup>
+
+	<!-- DIPENDENZE DI TEST (IMPORTATE SOLO SE NECESSARIO) -->
+	<Import Project="$(MSBuildThisFileDirectory)TestDependencies.props" Condition="'$(IsTestProject)' == 'true'"/>
+</Project>
