@@ -20,11 +20,5 @@
 		<!-- Strumento code coverage -->
 		<PackageReference Include="FluentAssertions"/>
 		<!-- Asserzioni avanzate -->
-
-		<!-- GLOBAL USING DIRECTIVES -->
-		<Using Include="Xunit" />
-		<!-- Abilita [Fact], [Theory] senza "using" -->
-		<Using Include="Moq" />
-		<!-- Abilita "new Mock<T>()" direttamente -->
 	</ItemGroup>
 </Project>
