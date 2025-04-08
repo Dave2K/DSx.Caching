@@ -3,9 +3,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-
   <ItemGroup>
-    <PackageReference Include="StackExchange.Redis"/>
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder"/>
+    <Folder Include="Configuration\" />
   </ItemGroup>
 </Project>

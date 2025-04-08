@@ -21,4 +21,8 @@
 
 	<!-- AGGIUNGERE QUI RIFERIMENTI A PROGETTI INTERNI SE NECESSARIO -->
 
+	<PropertyGroup>
+		<GenerateWSEnvironment>true</GenerateWSEnvironment>
+	</PropertyGroup>
+
 </Project>
