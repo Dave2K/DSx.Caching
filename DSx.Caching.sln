@@ -4,20 +4,23 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "sources", "sources", "{C15F7F5D-3A2C-4E89-BD94-5F3A1D8F4C1A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DSx.Caching.Abstractions", "src\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj", "{C3D4A9F6-2D7F-4A8B-9E6E-7A1B3C8D9E0F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DSx.Caching.Abstractions", "sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj", "{C3D4A9F6-2D7F-4A8B-9E6E-7A1B3C8D9E0F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{6C83A596-D32D-B35F-00DD-F0C99B673980}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{9DF70304-0A22-CE1E-AA12-D5904EE55694}"
 	ProjectSection(SolutionItems) = preProject
 		Directory.Build.props = Directory.Build.props
-		Directory.Packages.props = Directory.Packages.props
-		TestDependencies.props = TestDependencies.props
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Abstractions.UnitTests", "tests\DSx.Caching.Abstractions.UnitTests\DSx.Caching.Abstractions.UnitTests.csproj", "{C9B072E4-B3A3-48B6-A20F-B4BE369C6A1B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9C75B2BB-B6BC-4536-96E6-3EBD258B5B0A}"
+	ProjectSection(SolutionItems) = preProject
+		build\Directory.Packages.props = build\Directory.Packages.props
+		build\DotNetSettings.props = build\DotNetSettings.props
+		build\TestDependencies.props = build\TestDependencies.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

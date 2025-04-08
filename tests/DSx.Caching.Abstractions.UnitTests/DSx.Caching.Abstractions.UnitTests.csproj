@@ -16,7 +16,7 @@
 	<!-- DIPENDENZE DEL PROGETTO -->
 	<ItemGroup>
 		<!-- Riferimento al progetto da testare -->
-		<ProjectReference Include="..\..\src\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
+		<ProjectReference Include="..\..\sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
 
 		<!-- LE DIPENDENZE DI TEST (xunit, Moq, ecc.) SONO GIA' INCLUSE 
          AUTOMATICAMENTE TRAMITE TestDependencies.props -->

@@ -7,4 +7,5 @@
 .vscode/
 
 # Ignora file del progetto
+artifacts/
 temp/
