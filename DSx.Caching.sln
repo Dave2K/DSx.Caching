@@ -8,15 +8,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DSx.Caching.Abstractions", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{6C83A596-D32D-B35F-00DD-F0C99B673980}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{9DF70304-0A22-CE1E-AA12-D5904EE55694}"
-	ProjectSection(SolutionItems) = preProject
-		Directory.Build.props = Directory.Build.props
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Abstractions.UnitTests", "tests\DSx.Caching.Abstractions.UnitTests\DSx.Caching.Abstractions.UnitTests.csproj", "{C9B072E4-B3A3-48B6-A20F-B4BE369C6A1B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{9C75B2BB-B6BC-4536-96E6-3EBD258B5B0A}"
 	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
 		build\Directory.Packages.props = build\Directory.Packages.props
 		build\DotNetSettings.props = build\DotNetSettings.props
 		build\TestDependencies.props = build\TestDependencies.props
