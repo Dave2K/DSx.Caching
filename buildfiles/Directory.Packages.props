@@ -6,6 +6,7 @@
     <PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="9.0.3" />
     <!-- Validazione avanzata -->
     <PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="9.0.3" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
     <!-- Cache in memoria -->
     <!-- DEPENDENCY INJECTION & LOGGING -->
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />

@@ -1,3 +1,4 @@
+// File: sources/DSx.Caching.Providers.Memory/MemoryCacheProvider.cs
 using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Abstractions.Models;
 using DSx.Caching.Abstractions.Validators;
@@ -10,9 +11,9 @@ using System.Threading.Tasks;
 namespace DSx.Caching.Providers.Memory
 {
     /// <summary>
-    /// Provider di cache in memoria con gestione completa delle operazioni
+    /// Provider di caching in memoria utilizzando IMemoryCache
     /// </summary>
-    public sealed class MemoryCacheProvider : ICacheProvider, IDisposable
+    public sealed class MemoryCacheProvider : ICacheProvider, IDisposable, IAsyncDisposable
     {
         private readonly IMemoryCache _cache;
         private readonly ILogger<MemoryCacheProvider> _logger;
@@ -20,7 +21,7 @@ namespace DSx.Caching.Providers.Memory
         private bool _disposed;
 
         /// <summary>
-        /// Inizializza una nuova istanza del provider
+        /// Costruttore principale
         /// </summary>
         public MemoryCacheProvider(
             IMemoryCache cache,
@@ -33,52 +34,27 @@ namespace DSx.Caching.Providers.Memory
         }
 
         /// <inheritdoc/>
-        public async Task<CacheOperationResult> ClearAllAsync(CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (_cache is MemoryCache memoryCache)
-                    memoryCache.Compact(1.0);
-
-                return await Task.FromResult(new CacheOperationResult
-                {
-                    Status = CacheOperationStatus.Success
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Errore durante la pulizia completa della cache");
-                return new CacheOperationResult
-                {
-                    Status = CacheOperationStatus.ValidationError,
-                    Details = ex.Message
-                };
-            }
-        }
-
-        /// <inheritdoc/>
         public async Task<CacheOperationResult> ExistsAsync(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default)
         {
+            await Task.Yield();
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 _keyValidator.Validate(key);
 
-                return await Task.FromResult(new CacheOperationResult
+                return new CacheOperationResult
                 {
                     Status = _cache.TryGetValue(key, out _) ?
                         CacheOperationStatus.Success :
                         CacheOperationStatus.NotFound
-                });
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore durante la verifica esistenza chiave: {Key}", key);
+                _logger.LogError(ex, "Errore verifica esistenza chiave: {Key}", key);
                 return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -93,56 +69,20 @@ namespace DSx.Caching.Providers.Memory
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default)
         {
+            await Task.Yield();
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
                 _keyValidator.Validate(key);
 
-                if (_cache.TryGetValue(key, out T? value))
-                {
-                    return await Task.FromResult(new CacheOperationResult<T>
-                    {
-                        Status = CacheOperationStatus.Success,
-                        Value = value!
-                    });
-                }
-
-                return await Task.FromResult(new CacheOperationResult<T>
-                {
-                    Status = CacheOperationStatus.NotFound
-                });
+                return _cache.TryGetValue(key, out T? value)
+                    ? new CacheOperationResult<T> { Status = CacheOperationStatus.Success, Value = value! }
+                    : new CacheOperationResult<T> { Status = CacheOperationStatus.NotFound };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore durante il recupero valore: {Key}", key);
+                _logger.LogError(ex, "Errore recupero valore: {Key}", key);
                 return new CacheOperationResult<T>
-                {
-                    Status = CacheOperationStatus.ValidationError,
-                    Details = ex.Message
-                };
-            }
-        }
-
-        /// <inheritdoc/>
-        public async Task<CacheOperationResult> RemoveAsync(
-            string key,
-            CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-                _keyValidator.Validate(key);
-
-                _cache.Remove(key);
-                return await Task.FromResult(new CacheOperationResult
-                {
-                    Status = CacheOperationStatus.Success
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Errore durante la rimozione chiave: {Key}", key);
-                return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
                     Details = ex.Message
@@ -157,6 +97,7 @@ namespace DSx.Caching.Providers.Memory
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default)
         {
+            await Task.Yield();
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -171,14 +112,11 @@ namespace DSx.Caching.Providers.Memory
                 }
 
                 _cache.Set(key, value, cacheEntryOptions);
-                return await Task.FromResult(new CacheOperationResult
-                {
-                    Status = CacheOperationStatus.Success
-                });
+                return new CacheOperationResult { Status = CacheOperationStatus.Success };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore durante il salvataggio valore: {Key}", key);
+                _logger.LogError(ex, "Errore salvataggio valore: {Key}", key);
                 return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -187,9 +125,57 @@ namespace DSx.Caching.Providers.Memory
             }
         }
 
-        /// <summary>
-        /// Gestione della disposizione delle risorse
-        /// </summary>
+        /// <inheritdoc/>
+        public async Task<CacheOperationResult> RemoveAsync(
+            string key,
+            CancellationToken cancellationToken = default)
+        {
+            await Task.Yield();
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                _keyValidator.Validate(key);
+
+                _cache.Remove(key);
+                return new CacheOperationResult { Status = CacheOperationStatus.Success };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore rimozione chiave: {Key}", key);
+                return new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.ValidationError,
+                    Details = ex.Message
+                };
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<CacheOperationResult> ClearAllAsync(
+            CancellationToken cancellationToken = default)
+        {
+            await Task.Yield();
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (_cache is MemoryCache memoryCache)
+                    memoryCache.Compact(1.0);
+
+                return new CacheOperationResult { Status = CacheOperationStatus.Success };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore pulizia cache");
+                return new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.ValidationError,
+                    Details = ex.Message
+                };
+            }
+        }
+
+        /// <inheritdoc/>
         public void Dispose()
         {
             if (!_disposed)
@@ -199,6 +185,20 @@ namespace DSx.Caching.Providers.Memory
 
                 _disposed = true;
             }
+            GC.SuppressFinalize(this);
+        }
+
+        /// <inheritdoc/>
+        public async ValueTask DisposeAsync()
+        {
+            if (_disposed) return;
+
+            if (_cache is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync();
+            else if (_cache is IDisposable disposable)
+                disposable.Dispose();
+
+            _disposed = true;
             GC.SuppressFinalize(this);
         }
     }

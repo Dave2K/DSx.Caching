@@ -1,3 +1,4 @@
+// File: sources/DSx.Caching.Abstractions/Interfaces/ICacheProvider.cs
 using DSx.Caching.Abstractions.Models;
 using System.Threading;
 using System.Threading.Tasks;
@@ -5,43 +6,43 @@ using System.Threading.Tasks;
 namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
-    /// Fornisce operazioni di caching con supporto asincrono
+    /// Definisce le operazioni base per un provider di caching
     /// </summary>
-    public interface ICacheProvider
+    public interface ICacheProvider : IDisposable, IAsyncDisposable
     {
         /// <summary>
-        /// Verifica l'esistenza di una voce nella cache
+        /// Verifica l'esistenza di una chiave nella cache
         /// </summary>
         /// <param name="key">Chiave da verificare</param>
-        /// <param name="options">Opzioni configurabili per la voce</param>
-        /// <param name="cancellationToken">Token di annullamento</param>
-        /// <returns>Risultato con stato di esistenza</returns>
+        /// <param name="options">Opzioni aggiuntive per l'operazione</param>
+        /// <param name="cancellationToken">Token di cancellazione</param>
+        /// <returns>Risultato dell'operazione con stato</returns>
         Task<CacheOperationResult> ExistsAsync(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Recupera un valore dalla cache
+        /// Ottiene un valore dalla cache
         /// </summary>
-        /// <typeparam name="T">Tipo del valore memorizzato</typeparam>
+        /// <typeparam name="T">Tipo del valore da recuperare</typeparam>
         /// <param name="key">Chiave da recuperare</param>
-        /// <param name="options">Opzioni configurabili per la voce</param>
-        /// <param name="cancellationToken">Token di annullamento</param>
-        /// <returns>Risultato con valore se trovato</returns>
+        /// <param name="options">Opzioni aggiuntive per l'operazione</param>
+        /// <param name="cancellationToken">Token di cancellazione</param>
+        /// <returns>Risultato con valore e stato dell'operazione</returns>
         Task<CacheOperationResult<T>> GetAsync<T>(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Memorizza un valore nella cache
+        /// Imposta un valore nella cache
         /// </summary>
         /// <typeparam name="T">Tipo del valore da memorizzare</typeparam>
-        /// <param name="key">Chiave di memorizzazione</param>
+        /// <param name="key">Chiave da impostare</param>
         /// <param name="value">Valore da memorizzare</param>
-        /// <param name="options">Opzioni di scadenza e rimozione</param>
-        /// <param name="cancellationToken">Token di annullamento</param>
+        /// <param name="options">Opzioni di scadenza e comportamento</param>
+        /// <param name="cancellationToken">Token di cancellazione</param>
         /// <returns>Risultato dell'operazione</returns>
         Task<CacheOperationResult> SetAsync<T>(
             string key,
@@ -50,10 +51,10 @@ namespace DSx.Caching.Abstractions.Interfaces
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Rimuove una voce dalla cache
+        /// Rimuove una chiave dalla cache
         /// </summary>
         /// <param name="key">Chiave da rimuovere</param>
-        /// <param name="cancellationToken">Token di annullamento</param>
+        /// <param name="cancellationToken">Token di cancellazione</param>
         /// <returns>Risultato dell'operazione</returns>
         Task<CacheOperationResult> RemoveAsync(
             string key,
@@ -62,7 +63,7 @@ namespace DSx.Caching.Abstractions.Interfaces
         /// <summary>
         /// Svuota completamente la cache
         /// </summary>
-        /// <param name="cancellationToken">Token di annullamento</param>
+        /// <param name="cancellationToken">Token di cancellazione</param>
         /// <returns>Risultato dell'operazione</returns>
         Task<CacheOperationResult> ClearAllAsync(
             CancellationToken cancellationToken = default);

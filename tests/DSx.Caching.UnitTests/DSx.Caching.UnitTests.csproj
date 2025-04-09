@@ -11,14 +11,21 @@
 		<!-- NON SERVE IMPOSTARE MANUALMENTE IsTestProject: 
          Viene gestito automaticamente da Directory.Build.props -->
 	</PropertyGroup>
-	
+
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration" />
 		<PackageReference Include="Microsoft.Extensions.Logging" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
-		<ProjectReference Include="..\..\sources\DSx.Caching.Providers.Redis\DSx.Caching.Providers.Redis.csproj" />
-		<ProjectReference Include="..\DSx.Caching.Core.UnitTests\DSx.Caching.Core.UnitTests.csproj" />
+	  <ProjectReference Include="..\..\sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
+	  <ProjectReference Include="..\..\sources\DSx.Caching.Providers.Memory\DSx.Caching.Providers.Memory.csproj" />
+	  <ProjectReference Include="..\..\sources\DSx.Caching.Providers.Redis\DSx.Caching.Providers.Redis.csproj" />
+	  <ProjectReference Include="..\..\sources\DSx.Caching\DSx.Caching.csproj" />
 	</ItemGroup>
+
+	<PropertyGroup>
+		<GenerateWSEnvironment>true</GenerateWSEnvironment>
+	</PropertyGroup>
 
 </Project>
