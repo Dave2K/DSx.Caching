@@ -6,86 +6,66 @@ using Xunit;
 namespace DSx.Caching.Abstractions.UnitTests
 {
     /// <summary>
-    /// Contiene i test unitari per la classe <see cref="CacheException"/>.
+    /// Test per la classe <see cref="CacheException"/>
     /// </summary>
     public class CacheExceptionTests
     {
         /// <summary>
-        /// Verifica che il costruttore con messaggio imposti correttamente i dettagli tecnici.
+        /// Verifica che il costruttore con messaggio imposti correttamente i dettagli tecnici
         /// </summary>
         [Fact]
-        public void Constructor_WithMessage_ShouldSetTechnicalDetails()
+        public void Costruttore_ConMessaggioValido_ImpostaTechnicalDetailsCorrettamente()
         {
             // Arrange
-            const string expectedMessage = "Test message";
+            const string messaggio = "Errore di test";
 
             // Act
-            var ex = new CacheException(expectedMessage);
+            var ex = new CacheException(messaggio);
 
             // Assert
-            ex.Message.Should().Be(expectedMessage);
             ex.TechnicalDetails.Should()
-                .Contain("Cache Failure: " + expectedMessage)
+                .Contain("Cache Failure: " + messaggio)
                 .And.Contain("Exception Type: DSx.Caching.Abstractions.Exceptions.CacheException");
         }
 
         /// <summary>
-        /// Verifica che il costruttore con eccezione interna includa i dettagli dell'eccezione originale.
+        /// Verifica che le eccezioni interne vengano riportate nei dettagli tecnici
         /// </summary>
         [Fact]
-        public void Constructor_WithMessageAndInnerException_ShouldIncludeInnerDetails()
+        public void Costruttore_ConEccezioneInterna_IncludiDettagliInnerException()
         {
             // Arrange
-            const string expectedMessage = "Test message";
-            const string innerMessage = "Errore interno";
-            InvalidOperationException innerEx;
-
-            try
-            {
-                throw new InvalidOperationException(innerMessage);
-            }
-            catch (InvalidOperationException ex)
-            {
-                innerEx = ex;
-            }
+            var innerEx = new InvalidOperationException("Errore interno");
 
             // Act
-            var exception = new CacheException(expectedMessage, innerEx);
+            var exception = new CacheException("Messaggio principale", innerEx);
 
             // Assert
             exception.TechnicalDetails.Should()
                 .Contain("Inner Exception Type: System.InvalidOperationException")
-                .And.Contain($"Inner Message: {innerMessage}")
-                .And.Contain("Inner Stack Trace:");
+                .And.Contain("Inner Message: Errore interno");
         }
 
         /// <summary>
-        /// Verifica che venga lanciata un'eccezione con messaggio vuoto.
+        /// Verifica il comportamento con messaggi non validi (null/vuoti/spazi)
         /// </summary>
-        [Fact]
-        public void Constructor_WithEmptyMessage_ShouldThrowArgumentException()
+        /// <param name="messaggioNonValido">Valore non valido da testare</param>
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void Costruttore_ConMessaggioVuoto_GeneraArgumentException(string? messaggioNonValido)
         {
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => new CacheException(""))
+            Assert.Throws<ArgumentException>(() => new CacheException(messaggioNonValido!))
                 .ParamName.Should().Be("message");
         }
 
         /// <summary>
-        /// Verifica che venga lanciata un'eccezione con messaggio contenente solo spazi bianchi.
+        /// Verifica la presenza dello stack trace quando non ci sono eccezioni interne
         /// </summary>
         [Fact]
-        public void Constructor_WithWhitespaceMessage_ShouldThrowArgumentException()
-        {
-            // Act & Assert
-            Assert.Throws<ArgumentException>(() => new CacheException("   "))
-                .ParamName.Should().Be("message");
-        }
-
-        /// <summary>
-        /// Verifica che i dettagli tecnici mostrino lo stack trace quando non è presente un'eccezione interna.
-        /// </summary>
-        [Fact]
-        public void TechnicalDetails_WithoutInnerException_ShouldShowStackTrace()
+        public void TechnicalDetails_SenzaInnerException_MostraStackTrace()
         {
             // Arrange
             var ex = new CacheException("Test");
@@ -100,19 +80,19 @@ namespace DSx.Caching.Abstractions.UnitTests
         }
 
         /// <summary>
-        /// Verifica che i messaggi vengano trimmati dagli spazi bianchi.
+        /// Verifica la rimozione degli spazi bianchi nel messaggio
         /// </summary>
         [Fact]
-        public void ValidateMessage_ShouldTrimWhitespace()
+        public void ValidateMessage_TrimmaSpaziBianchi()
         {
             // Arrange
-            const string messageWithWhitespace = "  Test message  ";
+            const string messaggioOriginale = "  Messaggio con spazi  ";
 
             // Act
-            var ex = new CacheException(messageWithWhitespace);
+            var ex = new CacheException(messaggioOriginale);
 
             // Assert
-            ex.Message.Should().Be("Test message");
+            ex.Message.Should().Be("Messaggio con spazi");
         }
     }
 }

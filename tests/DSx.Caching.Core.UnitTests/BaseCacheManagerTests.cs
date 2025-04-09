@@ -37,7 +37,7 @@ namespace DSx.Caching.Core.UnitTests
         /// Verifica che gli errori vengano gestiti correttamente nel metodo GetInternalAsync
         /// </summary>
         [Fact]
-        public async Task GetInternalAsync_OnError_ShouldReturnValidationError()
+        public async Task GetInternalAsync_inCasoDiErrore_deveRestituireValidationError()
         {
             // Arrange
             const string testKey = "test_key";

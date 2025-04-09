@@ -13,7 +13,7 @@ namespace DSx.Caching.Abstractions.UnitTests
         /// inizializza correttamente le proprietà dell'eccezione
         /// </summary>
         [Fact]
-        public void Constructor_WithMessageAndInnerException_InitializesCorrectly()
+        public void Costruttore_conMessaggio_eEccezioneInterna_inizializzaCorrettamente()
         {
             // Arrange
             var innerEx = new InvalidOperationException();

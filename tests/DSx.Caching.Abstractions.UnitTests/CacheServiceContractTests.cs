@@ -7,60 +7,77 @@ using DSx.Caching.Abstractions;
 namespace DSx.Caching.Abstractions.UnitTests
 {
     /// <summary>
-    /// Unit tests for verifying the <see cref="ICacheService"/> contract.
+    /// Verifica il rispetto del contratto per l'interfaccia ICacheService
     /// </summary>
     public class CacheServiceContractTests
     {
         private readonly Mock<ICacheService> _mockCacheService = new();
 
         /// <summary>
-        /// Tests that <see cref="ICacheService.GetAsync{T}(string)"/> throws an <see cref="ArgumentNullException"/> when the key is null.
+        /// Verifica che GetAsync sollevi eccezione con chiave nulla
         /// </summary>
         [Fact]
-        public async Task GetAsync_KeyIsNull_ThrowsArgumentNullException()
+        public async Task GetAsync_ChiaveNulla_GeneraEccezioneArgomentoNullo()
         {
-            // Arrange
+            // Configurazione mock
             _mockCacheService
                 .Setup(s => s.GetAsync<string>(null!))
                 .ThrowsAsync(new ArgumentNullException("key"));
 
-            // Act & Assert
+            // Verifica
             await Assert.ThrowsAsync<ArgumentNullException>(
                 () => _mockCacheService.Object.GetAsync<string>(null!)
             );
         }
 
         /// <summary>
-        /// Tests that <see cref="ICacheService.SetAsync{T}(string, T)"/> throws an <see cref="ArgumentNullException"/> when the value is null.
+        /// Verifica che SetAsync sollevi eccezione con valore nullo
         /// </summary>
         [Fact]
-        public async Task SetAsync_ValueIsNull_ThrowsArgumentNullException()
+        public async Task SetAsync_ValoreNullo_GeneraEccezioneArgomentoNullo()
         {
-            // Arrange
+            // Configurazione mock  
             _mockCacheService
-                .Setup(s => s.SetAsync<string>("valid_key", null!))
+                .Setup(s => s.SetAsync<string>("chiave_valida", null!))
                 .ThrowsAsync(new ArgumentNullException("value"));
 
-            // Act & Assert
+            // Verifica
             await Assert.ThrowsAsync<ArgumentNullException>(
-                () => _mockCacheService.Object.SetAsync<string>("valid_key", null!)
+                () => _mockCacheService.Object.SetAsync<string>("chiave_valida", null!)
             );
         }
 
         /// <summary>
-        /// Tests that <see cref="ICacheService.RemoveAsync(string)"/> throws an <see cref="ArgumentException"/> when the key is empty.
+        /// Verifica che RemoveAsync sollevi eccezione con chiave vuota
         /// </summary>
         [Fact]
-        public async Task RemoveAsync_KeyIsEmpty_ThrowsArgumentException()
+        public async Task RemoveAsync_ChiaveVuota_GeneraEccezioneArgomento()
         {
-            // Arrange
+            // Configurazione mock
             _mockCacheService
                 .Setup(s => s.RemoveAsync(string.Empty))
-                .ThrowsAsync(new ArgumentException("Key cannot be empty.", "key"));
+                .ThrowsAsync(new ArgumentException("key"));
 
-            // Act & Assert
+            // Verifica
             await Assert.ThrowsAsync<ArgumentException>(
                 () => _mockCacheService.Object.RemoveAsync(string.Empty)
+            );
+        }
+
+        /// <summary>
+        /// Verifica il comportamento con chiave contenente spazi
+        /// </summary>
+        [Fact]
+        public async Task SetAsync_ChiaveConSpazi_GeneraEccezioneValidazione()
+        {
+            // Configurazione mock
+            _mockCacheService
+                .Setup(s => s.SetAsync("chiave non valida", "valore"))
+                .ThrowsAsync(new ArgumentException("Formato chiave non valido"));
+
+            // Verifica
+            await Assert.ThrowsAsync<ArgumentException>(
+                () => _mockCacheService.Object.SetAsync("chiave non valida", "valore")
             );
         }
     }

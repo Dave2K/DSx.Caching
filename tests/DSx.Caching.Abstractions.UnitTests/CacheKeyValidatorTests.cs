@@ -5,12 +5,12 @@ using Xunit;
 namespace DSx.Caching.Abstractions.UnitTests
 {
     /// <summary>
-    /// Test suite per la validazione delle chiavi della cache
+    /// Test per la classe <see cref="CacheKeyValidator"/>
     /// </summary>
     public class CacheKeyValidatorTests
     {
         /// <summary>
-        /// Verifica che chiavi valide non generino eccezioni
+        /// Verifica il comportamento con chiavi valide
         /// </summary>
         /// <param name="key">Chiave da testare</param>
         [Theory]
@@ -19,7 +19,7 @@ namespace DSx.Caching.Abstractions.UnitTests
         [InlineData("a")]
         [InlineData("key_with_underscore")]
         [InlineData("12345")]
-        public void ValidateKey_ValidKeys_ShouldNotThrow(string key)
+        public void ValidateKey_ChiaviValide_NonGeneraEccezioni(string key)
         {
             // Act
             var exception = Record.Exception(() => CacheKeyValidator.ThrowIfInvalid(key));
@@ -29,7 +29,7 @@ namespace DSx.Caching.Abstractions.UnitTests
         }
 
         /// <summary>
-        /// Verifica che chiavi con caratteri non consentiti generino eccezioni
+        /// Verifica il comportamento con caratteri non permessi
         /// </summary>
         /// <param name="key">Chiave non valida da testare</param>
         [Theory]
@@ -37,21 +37,21 @@ namespace DSx.Caching.Abstractions.UnitTests
         [InlineData("key with spaces")]
         [InlineData("key?test")]
         [InlineData("key/with/slash")]
-        public void ValidateKey_InvalidCharacters_ShouldThrow(string key)
+        public void ValidateKey_CaratteriNonPermessi_GeneraEccezione(string key)
         {
             // Act & Assert
             var ex = Assert.Throws<ArgumentException>(() =>
                 CacheKeyValidator.ThrowIfInvalid(key));
 
             ex.ParamName.Should().Be("key");
-            ex.Message.Should().Contain("non valido", "Messaggio d'errore appropriato");
+            ex.Message.Should().Contain("non valido");
         }
 
         /// <summary>
-        /// Verifica il limite massimo di lunghezza della chiave (128 caratteri)
+        /// Verifica il limite massimo di lunghezza della chiave
         /// </summary>
         [Fact]
-        public void ValidateKey_MaxLengthBoundary_ShouldNotThrow()
+        public void ValidateKey_LunghezzaMassima_NonGeneraEccezioni()
         {
             // Arrange
             var key = new string('a', 128);
@@ -61,10 +61,10 @@ namespace DSx.Caching.Abstractions.UnitTests
         }
 
         /// <summary>
-        /// Verifica che una chiave superiore alla lunghezza massima generi un'eccezione
+        /// Verifica il superamento della lunghezza massima
         /// </summary>
         [Fact]
-        public void ValidateKey_OverMaxLength_ShouldThrow()
+        public void ValidateKey_LunghezzaEccessiva_GeneraEccezione()
         {
             // Arrange
             var key = new string('a', 129);
@@ -76,10 +76,10 @@ namespace DSx.Caching.Abstractions.UnitTests
         }
 
         /// <summary>
-        /// Verifica che una chiave vuota generi un'eccezione
+        /// Verifica il comportamento con chiave vuota
         /// </summary>
         [Fact]
-        public void ValidateKey_EmptyKey_ShouldThrow()
+        public void ValidateKey_ChiaveVuota_GeneraEccezione()
         {
             // Arrange
             var key = string.Empty;
@@ -89,7 +89,7 @@ namespace DSx.Caching.Abstractions.UnitTests
                 CacheKeyValidator.ThrowIfInvalid(key));
 
             ex.ParamName.Should().Be("key");
-            ex.Message.Should().Contain("non può essere vuota", "Messaggio d'errore appropriato");
+            ex.Message.Should().Contain("non può essere vuota");
         }
     }
 }
