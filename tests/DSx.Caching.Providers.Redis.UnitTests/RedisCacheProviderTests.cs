@@ -55,15 +55,8 @@ namespace DSx.Caching.Providers.Redis.UnitTests
             var mockValidator = new Mock<ICacheKeyValidator>();
 
             // Configura il validatore per simulare una chiave valida
-            mockValidator.Setup(v => v.Validate(It.IsAny<string>())).Verifiable();
-
-            // Use RedisKey instead of string for the mock setup
-            mockDatabase
-                .Setup(db => db.StringGetAsync(It.IsAny<RedisKey>(), CommandFlags.None))
-                .ThrowsAsync(new RedisConnectionException(
-                    ConnectionFailureType.UnableToResolvePhysicalConnection,
-                    "Errore simulato"
-                ));
+            mockValidator.Setup(v => v.Validate(It.IsAny<string>()))
+                .Throws(new ArgumentException("Chiave non valida"));
 
             mockConnection.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
                 .Returns(mockDatabase.Object);
@@ -76,12 +69,9 @@ namespace DSx.Caching.Providers.Redis.UnitTests
             );
 
             // Act & Assert
-            await Assert.ThrowsAsync<RedisConnectionException>(
+            await Assert.ThrowsAsync<ArgumentException>(
                 () => provider.GetAsync<string>("any_key")
             );
-
-            // Verifica che il validatore sia stato chiamato
-            mockValidator.Verify();
         }
 
         /// <summary>

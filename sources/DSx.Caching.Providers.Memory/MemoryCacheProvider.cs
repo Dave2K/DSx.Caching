@@ -1,3 +1,4 @@
+using DSx.Caching.Abstractions;
 using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Abstractions.Models;
 using DSx.Caching.Abstractions.Validators;
@@ -10,22 +11,25 @@ using System.Threading.Tasks;
 namespace DSx.Caching.Providers.Memory
 {
     /// <summary>
-    /// Fornisce un'implementazione in-memory per il caching dei dati
+    /// Provider di cache basato su MemoryCache
     /// </summary>
-    public sealed class MemoryCacheProvider(
-    IMemoryCache cache,
-    ILogger<MemoryCacheProvider> logger,
-    ICacheKeyValidator keyValidator)
-    : ICacheProvider, IDisposable, IAsyncDisposable
+    public class MemoryCacheProvider(
+        IMemoryCache cache,
+        ILogger<MemoryCacheProvider> logger,
+        ICacheKeyValidator keyValidator) : BaseCacheProvider(logger)
     {
         private readonly IMemoryCache _cache = cache ?? throw new ArgumentNullException(nameof(cache));
-        private readonly ILogger<MemoryCacheProvider> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         private readonly ICacheKeyValidator _keyValidator = keyValidator ?? throw new ArgumentNullException(nameof(keyValidator));
+        private bool _disposed;
 
-        private bool _disposed = false;
-
-        /// <inheritdoc/>
-        public Task<CacheOperationResult> ExistsAsync(
+        /// <summary>
+        /// Verifica se una chiave esiste nella cache
+        /// </summary>
+        /// <param name="key">Chiave da verificare</param>
+        /// <param name="options">Opzioni della cache (opzionale)</param>
+        /// <param name="cancellationToken">Token di cancellazione (opzionale)</param>
+        /// <returns>Risultato dell'operazione</returns>
+        public override Task<CacheOperationResult> ExistsAsync(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default)
@@ -35,34 +39,33 @@ namespace DSx.Caching.Providers.Memory
                 _keyValidator.Validate(key);
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var exists = _cache.TryGetValue(key, out _);
                 return Task.FromResult(new CacheOperationResult
                 {
-                    Status = exists ? CacheOperationStatus.Success : CacheOperationStatus.NotFound
-                });
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogWarning("Verifica esistenza annullata per chiave: {Key}", key);
-                return Task.FromResult(new CacheOperationResult
-                {
-                    Status = CacheOperationStatus.ValidationError,
-                    Details = "Operazione annullata"
+                    Status = _cache.TryGetValue(key, out _)
+                        ? CacheOperationStatus.Success
+                        : CacheOperationStatus.NotFound
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore verifica esistenza chiave: {Key}", key);
+                var errorResult = HandleError<object>(ex, nameof(ExistsAsync), key);
                 return Task.FromResult(new CacheOperationResult
                 {
-                    Status = CacheOperationStatus.ValidationError,
-                    Details = ex.Message
+                    Status = errorResult.Status,
+                    Details = errorResult.Details
                 });
             }
         }
 
-        /// <inheritdoc/>
-        public Task<CacheOperationResult<T>> GetAsync<T>(
+        /// <summary>
+        /// Ottiene un valore dalla cache
+        /// </summary>
+        /// <typeparam name="T">Tipo del valore</typeparam>
+        /// <param name="key">Chiave del valore</param>
+        /// <param name="options">Opzioni della cache (opzionale)</param>
+        /// <param name="cancellationToken">Token di cancellazione (opzionale)</param>
+        /// <returns>Risultato dell'operazione con il valore</returns>
+        public override Task<CacheOperationResult<T>> GetAsync<T>(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default)
@@ -74,7 +77,7 @@ namespace DSx.Caching.Providers.Memory
 
                 if (_cache.TryGetValue(key, out T? value))
                 {
-                    if (value is null) // Controllo esplicito per null
+                    if (value is null)
                     {
                         return Task.FromResult(new CacheOperationResult<T>
                         {
@@ -85,7 +88,7 @@ namespace DSx.Caching.Providers.Memory
                     return Task.FromResult(new CacheOperationResult<T>
                     {
                         Status = CacheOperationStatus.Success,
-                        Value = value // Non serve ! grazie al controllo precedente
+                        Value = value
                     });
                 }
 
@@ -96,7 +99,7 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("Lettura annullata per chiave: {Key}", key);
+                Logger.LogWarning("Lettura annullata per chiave: {Key}", key);
                 return Task.FromResult(new CacheOperationResult<T>
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -105,7 +108,7 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore lettura chiave: {Key}", key);
+                Logger.LogError(ex, "Errore lettura chiave: {Key}", key);
                 return Task.FromResult(new CacheOperationResult<T>
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -114,8 +117,16 @@ namespace DSx.Caching.Providers.Memory
             }
         }
 
-        /// <inheritdoc/>
-        public Task<CacheOperationResult> SetAsync<T>(
+        /// <summary>
+        /// Imposta un valore nella cache
+        /// </summary>
+        /// <typeparam name="T">Tipo del valore</typeparam>
+        /// <param name="key">Chiave del valore</param>
+        /// <param name="value">Valore da memorizzare</param>
+        /// <param name="options">Opzioni della cache (opzionale)</param>
+        /// <param name="cancellationToken">Token di cancellazione (opzionale)</param>
+        /// <returns>Risultato dell'operazione</returns>
+        public override Task<CacheOperationResult> SetAsync<T>(
             string key,
             T value,
             CacheEntryOptions? options = null,
@@ -142,7 +153,7 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("Scrittura annullata per chiave: {Key}", key);
+                Logger.LogWarning("Scrittura annullata per chiave: {Key}", key);
                 return Task.FromResult(new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -151,7 +162,7 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore scrittura chiave: {Key}", key);
+                Logger.LogError(ex, "Errore scrittura chiave: {Key}", key);
                 return Task.FromResult(new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -160,8 +171,13 @@ namespace DSx.Caching.Providers.Memory
             }
         }
 
-        /// <inheritdoc/>
-        public Task<CacheOperationResult> RemoveAsync(
+        /// <summary>
+        /// Rimuove un valore dalla cache
+        /// </summary>
+        /// <param name="key">Chiave del valore da rimuovere</param>
+        /// <param name="cancellationToken">Token di cancellazione (opzionale)</param>
+        /// <returns>Risultato dell'operazione</returns>
+        public override Task<CacheOperationResult> RemoveAsync(
             string key,
             CancellationToken cancellationToken = default)
         {
@@ -178,7 +194,7 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("Rimozione annullata per chiave: {Key}", key);
+                Logger.LogWarning("Rimozione annullata per chiave: {Key}", key);
                 return Task.FromResult(new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -187,7 +203,7 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore rimozione chiave: {Key}", key);
+                Logger.LogError(ex, "Errore rimozione chiave: {Key}", key);
                 return Task.FromResult(new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -196,8 +212,12 @@ namespace DSx.Caching.Providers.Memory
             }
         }
 
-        /// <inheritdoc/>
-        public Task<CacheOperationResult> ClearAllAsync(
+        /// <summary>
+        /// Svuota completamente la cache
+        /// </summary>
+        /// <param name="cancellationToken">Token di cancellazione (opzionale)</param>
+        /// <returns>Risultato dell'operazione</returns>
+        public override Task<CacheOperationResult> ClearAllAsync(
             CancellationToken cancellationToken = default)
         {
             try
@@ -205,7 +225,7 @@ namespace DSx.Caching.Providers.Memory
                 cancellationToken.ThrowIfCancellationRequested();
 
                 if (_cache is MemoryCache memoryCache)
-                    memoryCache.Compact(1.0); // Compatta il 100% della cache
+                    memoryCache.Compact(1.0);
 
                 return Task.FromResult(new CacheOperationResult
                 {
@@ -214,7 +234,7 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("Pulizia cache annullata");
+                Logger.LogWarning("Pulizia cache annullata");
                 return Task.FromResult(new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -223,7 +243,7 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Errore pulizia globale cache");
+                Logger.LogError(ex, "Errore pulizia globale cache");
                 return Task.FromResult(new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
@@ -232,19 +252,23 @@ namespace DSx.Caching.Providers.Memory
             }
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
+        /// <summary>
+        /// Rilascia le risorse
+        /// </summary>
+        public override void Dispose()
         {
             if (!_disposed)
             {
                 _cache?.Dispose();
                 _disposed = true;
+                GC.SuppressFinalize(this);
             }
-            GC.SuppressFinalize(this);
         }
 
-        /// <inheritdoc/>
-        public ValueTask DisposeAsync()
+        /// <summary>
+        /// Rilascia le risorse in modo asincrono
+        /// </summary>
+        public override ValueTask DisposeAsync()
         {
             Dispose();
             return ValueTask.CompletedTask;
