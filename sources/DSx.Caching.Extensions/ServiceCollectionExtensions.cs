@@ -1,9 +1,9 @@
 ﻿using DSx.Caching.Abstractions.Interfaces;
+using DSx.Caching.Abstractions.Validators;
+using DSx.Caching.Core.Validators;
 using DSx.Caching.Providers.Memory;
-using DSx.Caching.Providers.Redis;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
-using StackExchange.Redis;
 
 namespace DSx.Caching.Extensions
 {
@@ -13,28 +13,21 @@ namespace DSx.Caching.Extensions
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Registra il provider di cache in memoria
+        /// Registra i servizi core per il sistema di caching
         /// </summary>
-        /// <param name="services">Collezione dei servizi</param>
-        public static IServiceCollection AddMemoryCacheProvider(this IServiceCollection services)
+        public static IServiceCollection AddCachingCore(this IServiceCollection services)
         {
-            services.AddSingleton<IMemoryCache, MemoryCache>();
-            services.AddSingleton<ICacheProvider, MemoryCacheProvider>();
+            services.AddSingleton<ICacheKeyValidator, CacheKeyValidator>();
             return services;
         }
 
         /// <summary>
-        /// Registra il provider Redis con configurazione
+        /// Registra il provider di cache in memoria
         /// </summary>
-        /// <param name="services">Collezione dei servizi</param>
-        /// <param name="connectionString">Stringa di connessione Redis</param>
-        public static IServiceCollection AddRedisCacheProvider(
-            this IServiceCollection services,
-            string connectionString)
+        public static IServiceCollection AddMemoryCacheProvider(this IServiceCollection services)
         {
-            services.AddSingleton<IConnectionMultiplexer>(_ =>
-                ConnectionMultiplexer.Connect(connectionString));
-            services.AddSingleton<ICacheProvider, RedisCacheProvider>();
+            services.AddSingleton<IMemoryCache, MemoryCache>();
+            services.AddSingleton<ICacheProvider, MemoryCacheProvider>();
             return services;
         }
     }
