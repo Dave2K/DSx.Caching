@@ -59,19 +59,43 @@ namespace DSx.Caching.UnitTests
         [Fact]
         public async Task GetAsync_ConChiaveValida_RestituisceValore()
         {
-            // Arrange
-            const string testKey = "test_key";
-            const string testValue = "test_value";
+            // 1. Configurazione dei servizi
+            var services = new ServiceCollection();
 
-            _mockDatabase.Setup(db => db.StringGetAsync(testKey, CommandFlags.None))
-                .ReturnsAsync(testValue);
+            // Aggiungi logging
+            services.AddLogging();
 
-            // Act
-            var result = await _provider.GetAsync<string>(testKey);
+            // Configurazione Redis mock
+            var mockConnection = new Mock<IConnectionMultiplexer>();
+            var mockDatabase = new Mock<IDatabase>();
+            var endpoint = new System.Net.DnsEndPoint("localhost", 6379);
 
-            // Assert
+            mockConnection.Setup(c => c.IsConnected).Returns(true);
+            mockConnection.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+                         .Returns(mockDatabase.Object);
+            mockConnection.Setup(c => c.GetEndPoints(false))
+                         .Returns([endpoint]);
+
+            // Registra i servizi necessari
+            services.AddSingleton<IConnectionMultiplexer>(mockConnection.Object);
+            services.AddSingleton<ICacheKeyValidator, CacheKeyValidator>();
+            services.AddSingleton<RedisCacheProvider>();
+            services.AddSingleton<ICacheProvider>(sp => sp.GetRequiredService<RedisCacheProvider>());
+
+            // Configura il mock per restituire un valore valido
+            mockDatabase.Setup(db => db.StringGetAsync("test_key", CommandFlags.None))
+                       .ReturnsAsync("\"test_value\"");
+
+            // 2. Build del service provider
+            var serviceProvider = services.BuildServiceProvider();
+
+            // 3. Esecuzione del test
+            var cacheProvider = serviceProvider.GetRequiredService<ICacheProvider>();
+            var result = await cacheProvider.GetAsync<string>("test_key");
+
+            // 4. Verifiche
             Assert.Equal(CacheOperationStatus.Success, result.Status);
-            Assert.Equal(testValue, result.Value);
+            Assert.Equal("test_value", result.Value);
         }
 
         /// <summary>
@@ -81,7 +105,7 @@ namespace DSx.Caching.UnitTests
         [Fact]
         public async Task SetAsync_ConDatiValidi_MemorizzaValore()
         {
-            // Arrange
+            // Configurazione
             const string testKey = "test_key";
             const string testValue = "test_value";
 
@@ -91,21 +115,22 @@ namespace DSx.Caching.UnitTests
                 null,
                 When.Always,
                 CommandFlags.None))
-                .ReturnsAsync(true);
+            .ReturnsAsync(true)
+            .Verifiable();
 
-            // Act
+            // Esecuzione
             var result = await _provider.SetAsync(testKey, testValue);
 
-            // Assert
+            // Verifica
             Assert.Equal(CacheOperationStatus.Success, result.Status);
 
             _mockDatabase.Verify(db => db.StringSetAsync(
                 testKey,
-                It.Is<RedisValue>(v => v.ToString() == testValue),
+                It.Is<RedisValue>(v => v.ToString() == "\"test_value\""), // JSON serializzato
                 null,
                 When.Always,
                 CommandFlags.None),
-                Times.Once);
+            Times.Once);
         }
 
         /// <summary>
