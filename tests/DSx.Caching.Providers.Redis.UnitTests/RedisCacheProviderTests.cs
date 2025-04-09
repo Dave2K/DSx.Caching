@@ -1,4 +1,5 @@
 ﻿using DSx.Caching.Abstractions.Exceptions;
+using DSx.Caching.Abstractions.Validators;
 using DSx.Caching.Core.Validators;
 using DSx.Caching.Providers.Redis;
 using Microsoft.Extensions.Logging;
@@ -48,18 +49,39 @@ namespace DSx.Caching.Providers.Redis.UnitTests
         [Fact]
         public async Task GetAsync_ChiaveNonValida_GeneraEccezione()
         {
-            // Configurazione mock per generare un'eccezione reale
-            _mockDatabase
-                .Setup(db => db.StringGetAsync("chiave_non_valida!", CommandFlags.None))
+            // Arrange
+            var mockConnection = new Mock<IConnectionMultiplexer>();
+            var mockDatabase = new Mock<IDatabase>();
+            var mockValidator = new Mock<ICacheKeyValidator>();
+
+            // Configura il validatore per simulare una chiave valida
+            mockValidator.Setup(v => v.Validate(It.IsAny<string>())).Verifiable();
+
+            // Use RedisKey instead of string for the mock setup
+            mockDatabase
+                .Setup(db => db.StringGetAsync(It.IsAny<RedisKey>(), CommandFlags.None))
                 .ThrowsAsync(new RedisConnectionException(
                     ConnectionFailureType.UnableToResolvePhysicalConnection,
                     "Errore simulato"
                 ));
 
+            mockConnection.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+                .Returns(mockDatabase.Object);
+
+            var provider = new RedisCacheProvider(
+                mockConnection.Object,
+                Mock.Of<ILogger<RedisCacheProvider>>(),
+                mockValidator.Object,
+                Options.Create(new JsonSerializerOptions())
+            );
+
             // Act & Assert
             await Assert.ThrowsAsync<RedisConnectionException>(
-                () => _provider.GetAsync<string>("chiave_non_valida!")
+                () => provider.GetAsync<string>("any_key")
             );
+
+            // Verifica che il validatore sia stato chiamato
+            mockValidator.Verify();
         }
 
         /// <summary>

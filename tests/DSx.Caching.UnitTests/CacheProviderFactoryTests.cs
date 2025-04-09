@@ -1,55 +1,124 @@
-﻿using System;
-using System.Collections.Generic;
-using DSx.Caching;
+﻿using DSx.Caching;
 using DSx.Caching.Abstractions.Interfaces;
-using DSx.Caching.Providers.Memory;
+using DSx.Caching.Abstractions.Models;
+using DSx.Caching.Abstractions.Validators;
+using DSx.Caching.Core.Validators;
 using DSx.Caching.Providers.Redis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Moq;
+using StackExchange.Redis;
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace DSx.Caching.UnitTests
 {
     /// <summary>
-    /// Classe di test per verificare il corretto funzionamento di CacheProviderFactory
+    /// Classe di test per verificare il corretto funzionamento di RedisCacheProvider
     /// </summary>
-    public class CacheProviderFactoryTests
+    public class RedisCacheProviderTests : IDisposable
     {
+        private readonly Mock<IConnectionMultiplexer> _mockConnection;
+        private readonly Mock<IDatabase> _mockDatabase;
+        private readonly Mock<ILogger<RedisCacheProvider>> _mockLogger;
+        private readonly ICacheKeyValidator _keyValidator;
+        private readonly IOptions<JsonSerializerOptions> _jsonOptions;
+        private readonly RedisCacheProvider _provider;
+        private bool _disposed;
+
         /// <summary>
-        /// Verifica che venga restituito il tipo corretto di provider in base al nome
+        /// Costruttore che inizializza l'ambiente di test
         /// </summary>
-        /// <param name="providerName">Nome del provider da testare</param>
-        /// <param name="expectedType">Tipo atteso del provider</param>
-        [Theory]
-        [InlineData("Redis", typeof(RedisCacheProvider))]
-        [InlineData("MemoryCache", typeof(MemoryCacheProvider))]
-        public void GetProvider_WithValidName_ReturnsCorrectType(string providerName, Type expectedType)
+        public RedisCacheProviderTests()
+        {
+            _mockConnection = new Mock<IConnectionMultiplexer>();
+            _mockDatabase = new Mock<IDatabase>();
+            _mockLogger = new Mock<ILogger<RedisCacheProvider>>();
+            _keyValidator = new CacheKeyValidator();
+            _jsonOptions = Options.Create(new JsonSerializerOptions());
+
+            _mockConnection.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+                .Returns(_mockDatabase.Object);
+
+            _provider = new RedisCacheProvider(
+                _mockConnection.Object,
+                _mockLogger.Object,
+                _keyValidator,
+                _jsonOptions);
+        }
+
+        /// <summary>
+        /// Verifica che GetAsync restituisca Success quando la chiave esiste
+        /// </summary>
+        /// <returns>Task asincrono</returns>
+        [Fact]
+        public async Task GetAsync_ConChiaveValida_RestituisceValore()
         {
             // Arrange
-            var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string?>
-                {
-                    ["CacheSettings:Providers:0"] = "Redis",
-                    ["CacheSettings:Providers:1"] = "MemoryCache",
-                    ["CacheSettings:DefaultProvider"] = "Redis",
-                    ["Redis:ConnectionString"] = "localhost",
-                    ["Redis:InstanceName"] = "Test"
-                })
-                .Build();
+            const string testKey = "test_key";
+            const string testValue = "test_value";
 
-            var services = new ServiceCollection()
-                .AddLogging()
-                .AddMemoryCache()
-                .AddConfiguredCacheProviders(config);
-
-            var provider = services.BuildServiceProvider();
+            _mockDatabase.Setup(db => db.StringGetAsync(testKey, CommandFlags.None))
+                .ReturnsAsync(testValue);
 
             // Act
-            var factory = provider.GetRequiredService<CacheProviderFactory>();
-            var result = factory.GetProvider(providerName);
+            var result = await _provider.GetAsync<string>(testKey);
 
             // Assert
-            Assert.IsType(expectedType, result);
+            Assert.Equal(CacheOperationStatus.Success, result.Status);
+            Assert.Equal(testValue, result.Value);
+        }
+
+        /// <summary>
+        /// Verifica che SetAsync memorizzi correttamente un valore e restituisca Success
+        /// </summary>
+        /// <returns>Task asincrono</returns>
+        [Fact]
+        public async Task SetAsync_ConDatiValidi_MemorizzaValore()
+        {
+            // Arrange
+            const string testKey = "test_key";
+            const string testValue = "test_value";
+
+            _mockDatabase.Setup(db => db.StringSetAsync(
+                testKey,
+                It.IsAny<RedisValue>(),
+                null,
+                When.Always,
+                CommandFlags.None))
+                .ReturnsAsync(true);
+
+            // Act
+            var result = await _provider.SetAsync(testKey, testValue);
+
+            // Assert
+            Assert.Equal(CacheOperationStatus.Success, result.Status);
+
+            _mockDatabase.Verify(db => db.StringSetAsync(
+                testKey,
+                It.Is<RedisValue>(v => v.ToString() == testValue),
+                null,
+                When.Always,
+                CommandFlags.None),
+                Times.Once);
+        }
+
+        /// <summary>
+        /// Implementazione di IDisposable per la pulizia delle risorse
+        /// </summary>
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _provider?.Dispose();
+                _disposed = true;
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

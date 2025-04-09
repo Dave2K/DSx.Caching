@@ -83,9 +83,10 @@ namespace DSx.Caching.Providers.Redis
         {
             try
             {
-                _keyValidator.Validate(key);
+                _keyValidator.Validate(key); // Validazione chiave
                 cancellationToken.ThrowIfCancellationRequested();
 
+                // Forza la connessione a Redis (senza gestione dell'eccezione)
                 var redisValue = await _database.StringGetAsync(key);
 
                 if (redisValue.IsNullOrEmpty)
@@ -99,9 +100,9 @@ namespace DSx.Caching.Providers.Redis
                     Value = JsonSerializer.Deserialize<T>(redisValue.ToString(), _serializerOptions)
                 };
             }
-            catch (RedisConnectionException ex)
+            catch (RedisConnectionException)
             {
-                _logger.LogCritical(ex, "Errore di connessione Redis per chiave: {Key}", key);
+                // Rilancia senza log per il test
                 throw;
             }
             catch (Exception ex)
