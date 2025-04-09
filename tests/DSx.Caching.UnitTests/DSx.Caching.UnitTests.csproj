@@ -1,31 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<!-- CONFIGURAZIONE BASE -->
-	<PropertyGroup>
-		<!-- Ereditate da Directory.Build.props -->
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<WarningsAsErrors>CS1591</WarningsAsErrors>
-
-		<!-- IMPOSTAZIONI SPECIFICHE TEST -->
-		<IsPackable>false</IsPackable>
-		<!-- Non generare pacchetto NuGet -->
-		<!-- NON SERVE IMPOSTARE MANUALMENTE IsTestProject: 
-         Viene gestito automaticamente da Directory.Build.props -->
-	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" />
-		<PackageReference Include="Microsoft.Extensions.Logging" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+		<PackageReference Include="StackExchange.Redis" />
 	</ItemGroup>
 
 	<ItemGroup>
 	  <ProjectReference Include="..\..\sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
 	  <ProjectReference Include="..\..\sources\DSx.Caching.Providers.Memory\DSx.Caching.Providers.Memory.csproj" />
 	  <ProjectReference Include="..\..\sources\DSx.Caching.Providers.Redis\DSx.Caching.Providers.Redis.csproj" />
-	  <ProjectReference Include="..\..\sources\DSx.Caching\DSx.Caching.csproj" />
 	</ItemGroup>
-
-	<PropertyGroup>
-		<GenerateWSEnvironment>true</GenerateWSEnvironment>
-	</PropertyGroup>
 
 </Project>

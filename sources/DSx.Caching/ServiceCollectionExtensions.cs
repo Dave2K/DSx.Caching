@@ -1,7 +1,6 @@
-﻿using DSx.Caching.Abstractions.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
 namespace DSx.Caching
@@ -12,40 +11,51 @@ namespace DSx.Caching
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Aggiunge i provider di cache configurati
+        /// Aggiunge i provider di cache configurati tramite IConfiguration
         /// </summary>
-        /// <param name="services">Collezione di servizi</param>
+        /// <param name="services">Collezione dei servizi</param>
         /// <param name="configuration">Configurazione dell'applicazione</param>
-        public static void AddConfiguredCacheProviders(
+        /// <returns>Riferimento alla collezione dei servizi</returns>
+        /// <exception cref="ArgumentNullException">Se la configurazione è mancante</exception>
+        public static IServiceCollection AddConfiguredCacheProviders(
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            services.AddLogging();
+
             var cacheSettings = configuration.GetSection("CacheSettings");
-            var providers = cacheSettings.GetSection("Providers").Get<string[]>();
+            var providers = cacheSettings.GetSection("Providers").Get<string[]>() ?? Array.Empty<string>();
 
-            // Registra Redis solo se configurato
-            if (providers?.Contains("Redis") == true)
+            if (providers.Contains("Redis"))
             {
-                services.AddStackExchangeRedisCache(options =>
+                var redisConfig = cacheSettings.GetSection("Redis");
+                var connectionString = redisConfig["ConnectionString"] 
+                    ?? throw new ArgumentNullException(nameof(configuration), "Redis:ConnectionString non configurato");
+
+                services.AddStackExchangeRedisCache(options => 
                 {
-                    options.Configuration = cacheSettings["Redis:ConnectionString"];
-                    options.InstanceName = cacheSettings["Redis:InstanceName"];
+                    options.Configuration = connectionString;
+                    options.InstanceName = redisConfig["InstanceName"];
+                });
+
+                services.AddSingleton<IConnectionMultiplexer>(_ => 
+                    ConnectionMultiplexer.Connect(connectionString));
+            }
+
+            if (providers.Contains("MemoryCache"))
+            {
+                var memoryConfig = cacheSettings.GetSection("MemoryCache");
+                services.AddMemoryCache(options => 
+                {
+                    options.SizeLimit = memoryConfig.GetValue<long?>("SizeLimit");
+                    options.CompactionPercentage = memoryConfig.GetValue<double>("CompactionPercentage");
+                    options.ExpirationScanFrequency = memoryConfig.GetValue<TimeSpan>("ExpirationScanFrequency");
                 });
             }
 
-            // Registra MemoryCache con opzioni
-            if (providers?.Contains("MemoryCache") == true)
-            {
-                services.AddMemoryCache(options =>
-                {
-                    options.SizeLimit = cacheSettings.GetValue<long?>("MemoryCache:SizeLimit");
-                });
-            }
-
-            // Registra la factory e il provider di default
-            services.AddSingleton<CacheProviderFactory>();
-            services.AddSingleton<ICacheProvider>(sp =>
-                sp.GetRequiredService<CacheProviderFactory>().GetProvider());
+            return services
+                .AddSingleton<CacheProviderFactory>()
+                .AddSingleton<ICacheProvider>(sp => sp.GetRequiredService<CacheProviderFactory>().GetProvider());
         }
     }
 }
