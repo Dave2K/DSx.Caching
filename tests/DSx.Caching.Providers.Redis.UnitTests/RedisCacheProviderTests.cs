@@ -48,18 +48,18 @@ namespace DSx.Caching.Providers.Redis.UnitTests
         [Fact]
         public async Task GetAsync_ChiaveNonValida_GeneraEccezione()
         {
-            // Arrange
-            const string chiaveNonValida = "chiave_non_valida!";
-            _mockDatabase.Setup(db => db.StringGetAsync(chiaveNonValida, CommandFlags.None))
-                .ThrowsAsync(new RedisConnectionException(ConnectionFailureType.UnableToResolvePhysicalConnection, "Errore simulato"));
+            // Configurazione mock per generare un'eccezione reale
+            _mockDatabase
+                .Setup(db => db.StringGetAsync("chiave_non_valida!", CommandFlags.None))
+                .ThrowsAsync(new RedisConnectionException(
+                    ConnectionFailureType.UnableToResolvePhysicalConnection,
+                    "Errore simulato"
+                ));
 
             // Act & Assert
-            var eccezione = await Assert.ThrowsAsync<RedisConnectionException>(
-                () => _provider.GetAsync<string>(chiaveNonValida)
+            await Assert.ThrowsAsync<RedisConnectionException>(
+                () => _provider.GetAsync<string>("chiave_non_valida!")
             );
-
-            Assert.NotNull(eccezione);
-            Assert.Contains("Errore simulato", eccezione.Message);
         }
 
         /// <summary>

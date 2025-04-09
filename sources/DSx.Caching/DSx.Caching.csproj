@@ -2,6 +2,7 @@
 
 	<ItemGroup>
 		<!-- Package References (versioni gestite da Directory.Packages.props) -->
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="Microsoft.Extensions.Logging" />

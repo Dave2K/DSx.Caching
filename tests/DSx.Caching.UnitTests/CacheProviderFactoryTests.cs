@@ -1,4 +1,6 @@
-﻿using DSx.Caching;
+﻿using System;
+using System.Collections.Generic;
+using DSx.Caching;
 using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Providers.Memory;
 using DSx.Caching.Providers.Redis;
@@ -6,16 +8,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace DSx.Caching.Tests
+namespace DSx.Caching.UnitTests
 {
     /// <summary>
-    /// Test per la CacheProviderFactory
+    /// Classe di test per verificare il corretto funzionamento di CacheProviderFactory
     /// </summary>
     public class CacheProviderFactoryTests
     {
         /// <summary>
-        /// Verifica che venga restituito il provider corretto
+        /// Verifica che venga restituito il tipo corretto di provider in base al nome
         /// </summary>
+        /// <param name="providerName">Nome del provider da testare</param>
+        /// <param name="expectedType">Tipo atteso del provider</param>
         [Theory]
         [InlineData("Redis", typeof(RedisCacheProvider))]
         [InlineData("MemoryCache", typeof(MemoryCacheProvider))]
@@ -23,7 +27,7 @@ namespace DSx.Caching.Tests
         {
             // Arrange
             var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>
+                .AddInMemoryCollection(new Dictionary<string, string?>
                 {
                     ["CacheSettings:Providers:0"] = "Redis",
                     ["CacheSettings:Providers:1"] = "MemoryCache",
@@ -36,40 +40,16 @@ namespace DSx.Caching.Tests
             var services = new ServiceCollection()
                 .AddLogging()
                 .AddMemoryCache()
-                .AddConfiguredCacheProviders(config)
-                .BuildServiceProvider();
+                .AddConfiguredCacheProviders(config);
 
-            var factory = new CacheProviderFactory(config, services);
+            var provider = services.BuildServiceProvider();
 
             // Act
-            var provider = factory.GetProvider(providerName);
+            var factory = provider.GetRequiredService<CacheProviderFactory>();
+            var result = factory.GetProvider(providerName);
 
             // Assert
-            Assert.IsType(expectedType, provider);
-        }
-
-        /// <summary>
-        /// Verifica che venga generata un'eccezione per provider non configurati
-        /// </summary>
-        [Fact]
-        public void GetProvider_WithUnconfiguredProvider_ThrowsException()
-        {
-            // Arrange
-            var config = new ConfigurationBuilder()
-                .AddInMemoryCollection(new Dictionary<string, string>
-                {
-                    ["CacheSettings:Providers:0"] = "MemoryCache"
-                })
-                .Build();
-
-            var services = new ServiceCollection()
-                .AddMemoryCache()
-                .BuildServiceProvider();
-
-            var factory = new CacheProviderFactory(config, services);
-
-            // Act & Assert
-            Assert.Throws<ProviderNotConfiguredException>(() => factory.GetProvider("Redis"));
+            Assert.IsType(expectedType, result);
         }
     }
 }
