@@ -1,10 +1,48 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-    <PropertyGroup>
-        <ShouldGenerateWSEnvironment Condition="'$(GenerateWSEnvironment)'=='true'">true</ShouldGenerateWSEnvironment>
-    </PropertyGroup>
+	<!-- Target per la generazione del file WSEnvironment.g.cs -->
+	<Target Name="GenerateWSEnvironment"
+			BeforeTargets="CoreCompile"
+			Condition="'$(GenerateWSEnvironment)'=='true'">
 
-    <Target Name="DebugGenerateWSEnvironment">
-        <Message Text="Valore GenerateWSEnvironment: $(GenerateWSEnvironment)" Importance="high" />
-        <Message Text="Valore ShouldGenerateWSEnvironment: $(ShouldGenerateWSEnvironment)" Importance="high" />
-    </Target>
+		<!-- Configurazione dei percorsi per la generazione dell'ambiente -->
+		<PropertyGroup>
+			<WSEnvironmentTemplatePath>$(WSBuildfilesPath)WSEnvironment.template.cs</WSEnvironmentTemplatePath>
+
+			<!-- Percorsi con escape dei caratteri per evitare errori -->
+			<EscapedResourcesPath>$([System.String]::Copy('$(WSBuildfilesPath)').Replace('\', '\\'))</EscapedResourcesPath>
+			<EscapedTempsPath>$([System.String]::Copy('$(WSTempsFolder)').Replace('\', '\\'))</EscapedTempsPath>
+
+			<!-- Percorso del file generato -->
+			<WSEnvironmentFilePath>$(IntermediateOutputPath)WSEnvironment.g.cs</WSEnvironmentFilePath>
+		</PropertyGroup>
+
+		<!-- Messaggi di debug per verificare il valore delle variabili -->
+		<Message Text="Valore GenerateWSEnvironment: $(GenerateWSEnvironment)" Importance="high" />
+		<Message Text="Valore WSEnvironmentTemplatePath: $(WSEnvironmentTemplatePath)" Importance="high" />
+		<Message Text="Valore WSEnvironmentFilePath: $(WSEnvironmentFilePath)" Importance="high" />
+
+		<!-- Leggi il file template -->
+		<ReadLinesFromFile File="$(WSEnvironmentTemplatePath)">
+			<Output TaskParameter="Lines" ItemName="TemplateLines" />
+		</ReadLinesFromFile>
+
+		<!-- Sostituzione dei segnaposto nel template -->
+		<ItemGroup>
+			<ReplacedLines Include="@(TemplateLines->Replace('$ResourcesPath$', '$(EscapedResourcesPath)'))" />
+			<ReplacedLines Include="@(ReplacedLines->Replace('$TempsPath$', '$(EscapedTempsPath)'))" />
+		</ItemGroup>
+
+		<!-- Scrittura del file generato -->
+		<WriteLinesToFile
+			File="$(WSEnvironmentFilePath)"
+			Lines="@(ReplacedLines)"
+			Overwrite="true"
+			Encoding="UTF-8" />
+
+		<!-- Inclusione del file generato nella compilazione -->
+		<ItemGroup>
+			<Compile Include="$(WSEnvironmentFilePath)" />
+			<FileWrites Include="$(WSEnvironmentFilePath)" />
+		</ItemGroup>
+	</Target>
 </Project>

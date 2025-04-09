@@ -2,22 +2,22 @@
 <Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 	<PropertyGroup>
 		<!-- Definizione del percorso principale della Workspace -->
-		<WorkspacePath>$(MSBuildThisFileDirectory)</WorkspacePath>
+		<WSPath>$(MSBuildThisFileDirectory)</WSPath>
 		
 		<!-- Percorsi per risorse e file temporanei -->
-		<WorkspaceBuildPath>$(WorkspacePath)build\</WorkspaceBuildPath>
-		<WorkspaceArtifactsPath>$(WorkspacePath)artifacts\</WorkspaceArtifactsPath>
-		<WorkspaceTempPath>$(WorkspacePath)temp\</WorkspaceTempPath>
-		<WorkspaceResourcesPath>$(WorkspacePath)Resources\</WorkspaceResourcesPath>
+		<WSBuildfilesPath>$(WSPath)buildfiles\</WSBuildfilesPath>
+		<WSArtifactsPath>$(WSPath)artifacts\</WSArtifactsPath>
+		<WSTempPath>$(WSPath)temp\</WSTempPath>
+		<WSResourcesPath>$(WSPath)Resources\</WSResourcesPath>
 
 		<!-- Configurazioni di compilazione -->
-		<OutputPath>$(WorkspaceArtifactsPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
-		<BaseIntermediateOutputPath>$(WorkspaceTempPath)$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+		<OutputPath>$(WSArtifactsPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+		<BaseIntermediateOutputPath>$(WSTempPath)$(MSBuildProjectName)\</BaseIntermediateOutputPath>
 		<IntermediateOutputPath>$(BaseIntermediateOutputPath)obj\$(Configuration)\</IntermediateOutputPath>
 	</PropertyGroup>
 
 	<!-- Importa i settaggi globali per i progetti -->
-	<Import Project="$(WorkspaceBuildPath)DotNetSettings.props" />
+	<Import Project="$(WSBuildfilesPath)DotNetSettings.props" />
 
 	<PropertyGroup>
 		<!-- PACCHETTI -->
@@ -31,8 +31,8 @@
 	</PropertyGroup>
 
 	<!-- Importa le reference dei progetti -->
-	<Import Project="$(WorkspaceBuildPath)Directory.Packages.props" />
+	<Import Project="$(WSBuildfilesPath)Directory.Packages.props" />
 
 	<!-- DIPENDENZE DI TEST (IMPORTATE SOLO SE NECESSARIO) -->
-	<Import Project="$(WorkspaceBuildPath)TestDependencies.props" Condition="'$(IsTestProject)' == 'true'"/>
+	<Import Project="$(WSBuildfilesPath)TestDependencies.props" Condition="'$(IsTestProject)' == 'true'"/>
 </Project>

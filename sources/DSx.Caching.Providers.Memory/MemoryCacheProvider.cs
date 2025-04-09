@@ -1,85 +1,212 @@
+using DSx.Caching.Abstractions.Interfaces;
+using DSx.Caching.Abstractions.Models;
+using DSx.Caching.Abstractions.Validators;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
 namespace DSx.Caching.Providers.Memory
 {
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using DSx.Caching.Abstractions.Interfaces;
-    using Microsoft.Extensions.Caching.Memory;
-    using Microsoft.Extensions.Logging;
-
     /// <summary>
-    /// In-memory cache provider implementation using Microsoft.Extensions.Caching.Memory
+    /// Implementazione di una cache in memoria
     /// </summary>
-    public class MemoryCacheProvider : ICacheProvider
+    public sealed class MemoryCacheProvider : ICacheProvider, IDisposable
     {
         private readonly IMemoryCache _cache;
         private readonly ILogger<MemoryCacheProvider> _logger;
+        private bool _disposed;
 
-        public MemoryCacheProvider(
-            IMemoryCache cache,
-            ILogger<MemoryCacheProvider> logger)
+        /// <summary>
+        /// Inizializza una nuova istanza del provider di cache in memoria
+        /// </summary>
+        public MemoryCacheProvider(IMemoryCache cache, ILogger<MemoryCacheProvider> logger)
         {
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        /// <inheritdoc/>
-        public Task<bool> ExistsAsync(string key, CancellationToken cancellationToken = default)
-        {
-            ValidateKey(key);
-            cancellationToken.ThrowIfCancellationRequested();
-            
-            return Task.FromResult(_cache.TryGetValue(key, out _));
-        }
-
-        /// <inheritdoc/>
-        public Task<T?> GetAsync<T>(string key, CancellationToken cancellationToken = default)
-        {
-            ValidateKey(key);
-            cancellationToken.ThrowIfCancellationRequested();
-
-            return Task.FromResult(_cache.Get<T>(key));
-        }
-
-        /// <inheritdoc/>
-        public Task<bool> SetAsync<T>(
-            string key, 
-            T value, 
-            TimeSpan expiration, 
+        /// <summary>
+        /// Verifica l'esistenza di una chiave nella cache
+        /// </summary>
+        public async Task<CacheOperationResult> ExistsAsync(
+            string key,
+            CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default)
         {
-            ValidateKey(key);
-            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                CacheKeyValidator.ThrowIfInvalid(key);
 
-            _cache.Set(key, value, expiration);
-            return Task.FromResult(true);
+                var exists = _cache.TryGetValue(key, out _);
+                return await Task.FromResult(new CacheOperationResult
+                {
+                    Status = exists ? CacheOperationStatus.Success : CacheOperationStatus.NotFound
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante la verifica della chiave '{Key}'", key);
+                return new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.ValidationError,
+                    Details = ex.Message
+                };
+            }
         }
 
-        /// <inheritdoc/>
-        public Task<bool> RemoveAsync(string key, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Ottiene un valore dalla cache
+        /// </summary>
+        public async Task<CacheOperationResult<T>> GetAsync<T>(
+            string key,
+            CacheEntryOptions? options = null,
+            CancellationToken cancellationToken = default)
         {
-            ValidateKey(key);
-            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                CacheKeyValidator.ThrowIfInvalid(key);
 
-            _cache.Remove(key);
-            return Task.FromResult(true);
+                if (_cache.TryGetValue(key, out T? value))
+                {
+                    return await Task.FromResult(new CacheOperationResult<T>
+                    {
+                        Status = CacheOperationStatus.Success,
+                        Value = value!
+                    });
+                }
+
+                return await Task.FromResult(new CacheOperationResult<T>
+                {
+                    Status = CacheOperationStatus.NotFound
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero della chiave '{Key}'", key);
+                return new CacheOperationResult<T>
+                {
+                    Status = CacheOperationStatus.ValidationError,
+                    Details = ex.Message
+                };
+            }
         }
 
-        /// <inheritdoc/>
-        public Task<bool> ClearAllAsync(CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Imposta un valore nella cache
+        /// </summary>
+        public async Task<CacheOperationResult> SetAsync<T>(
+            string key,
+            T value,
+            CacheEntryOptions? options = null,
+            CancellationToken cancellationToken = default)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                CacheKeyValidator.ThrowIfInvalid(key);
 
-            if (_cache is MemoryCache memCache)
-                memCache.Compact(1.0);
-            
-            return Task.FromResult(true);
+                var cacheEntryOptions = new MemoryCacheEntryOptions();
+                if (options != null)
+                {
+                    cacheEntryOptions.AbsoluteExpirationRelativeToNow = options.AbsoluteExpiration;
+                    cacheEntryOptions.SlidingExpiration = options.SlidingExpiration;
+                }
+
+                _cache.Set(key, value, cacheEntryOptions);
+                return await Task.FromResult(new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.Success
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il salvataggio della chiave '{Key}'", key);
+                return new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.ValidationError,
+                    Details = ex.Message
+                };
+            }
         }
 
-        private static void ValidateKey(string key)
+        /// <summary>
+        /// Rimuove una chiave dalla cache
+        /// </summary>
+        public async Task<CacheOperationResult> RemoveAsync(
+            string key,
+            CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentException("Cache key cannot be empty", nameof(key));
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                CacheKeyValidator.ThrowIfInvalid(key);
+
+                _cache.Remove(key);
+                return await Task.FromResult(new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.Success
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante la rimozione della chiave '{Key}'", key);
+                return new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.ValidationError,
+                    Details = ex.Message
+                };
+            }
+        }
+
+        /// <summary>
+        /// Svuota completamente la cache
+        /// </summary>
+        public async Task<CacheOperationResult> ClearAllAsync(
+            CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                if (_cache is MemoryCache memoryCache)
+                {
+                    memoryCache.Compact(1.0);
+                }
+
+                return await Task.FromResult(new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.Success
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante la pulizia della cache");
+                return new CacheOperationResult
+                {
+                    Status = CacheOperationStatus.ValidationError,
+                    Details = ex.Message
+                };
+            }
+        }
+
+        /// <summary>
+        /// Rilascia le risorse utilizzate
+        /// </summary>
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                if (_cache is IDisposable disposableCache)
+                {
+                    disposableCache.Dispose();
+                }
+                _disposed = true;
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

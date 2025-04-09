@@ -1,28 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<!-- CONFIGURAZIONI BASE -->
-	<PropertyGroup>
-		<!-- Framework ereditato da Directory.Build.props -->
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<!-- Genera documentazione XML -->
-		<WarningsAsErrors>CS1591</WarningsAsErrors>
-		<!-- Warning documentazione mancante = errore -->
-		<ImplicitUsings>enable</ImplicitUsings>
-		<!-- Usings globali abilitati -->
-	</PropertyGroup>
-
-	<!-- DIPENDENZE PACCHETTI -->
 	<ItemGroup>
-		<!-- Logger astratto (specificare versione in Directory.Packages.props) -->
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-
-		<!-- AGGIUNGERE QUI EVENTUALI ALTRE DIPENDENZE ASTRATTE -->
 	</ItemGroup>
-
-	<!-- AGGIUNGERE QUI RIFERIMENTI A PROGETTI INTERNI SE NECESSARIO -->
-
-	<PropertyGroup>
-		<GenerateWSEnvironment>true</GenerateWSEnvironment>
-	</PropertyGroup>
 
 </Project>
