@@ -46,6 +46,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "samples\Cons
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.DependencyInjection", "sources\DSx.Caching.DependencyInjection\DSx.Caching.DependencyInjection.csproj", "{2E891A7A-BA25-4169-AC32-2B93606B98A1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Infrastructure", "sources\DSx.Caching.Infrastructure\DSx.Caching.Infrastructure.csproj", "{54A23D23-6DB6-4913-8BF6-C972F958D89B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +106,10 @@ Global
 		{2E891A7A-BA25-4169-AC32-2B93606B98A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2E891A7A-BA25-4169-AC32-2B93606B98A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2E891A7A-BA25-4169-AC32-2B93606B98A1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54A23D23-6DB6-4913-8BF6-C972F958D89B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54A23D23-6DB6-4913-8BF6-C972F958D89B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54A23D23-6DB6-4913-8BF6-C972F958D89B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54A23D23-6DB6-4913-8BF6-C972F958D89B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -122,6 +128,7 @@ Global
 		{714E21B4-143A-59E2-9C5A-9C145F5ADBDE} = {6C83A596-D32D-B35F-00DD-F0C99B673980}
 		{EC7982ED-D218-4B77-A651-66BC04204C1E} = {40412BAB-9455-4935-9302-86AECB634528}
 		{2E891A7A-BA25-4169-AC32-2B93606B98A1} = {C15F7F5D-3A2C-4E89-BD94-5F3A1D8F4C1A}
+		{54A23D23-6DB6-4913-8BF6-C972F958D89B} = {C15F7F5D-3A2C-4E89-BD94-5F3A1D8F4C1A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {84E61796-2385-4C3A-892A-A27C00500B01}

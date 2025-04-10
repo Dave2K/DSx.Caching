@@ -10,6 +10,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\sources\DSx.Caching.Infrastructure\DSx.Caching.Infrastructure.csproj" />
 	  <ProjectReference Include="..\..\sources\DSx.Caching\DSx.Caching.csproj" />
 	</ItemGroup>
 

@@ -1,4 +1,5 @@
-﻿using DSx.Caching.Abstractions.Interfaces;
+﻿using DSx.Caching.Abstractions.Configurations;
+using DSx.Caching.Abstractions.Factories;
 using DSx.Caching.Abstractions.Models;
 using DSx.Caching.Abstractions.Validators;
 using DSx.Caching.Core;
@@ -13,30 +14,59 @@ using System.Threading.Tasks;
 namespace DSx.Caching.Providers.Redis
 {
     /// <summary>
-    /// Implementazione di un provider di cache utilizzando Redis come backend
+    /// Fornisce un'implementazione di cache basata su Redis
     /// </summary>
-    public sealed class RedisCacheProvider(
-        IConnectionMultiplexer connection,
-        ILogger<RedisCacheProvider> logger,
-        ICacheKeyValidator keyValidator,
-        IOptions<JsonSerializerOptions> jsonOptions)
-        : BaseCacheProvider(logger)
+    public sealed class RedisCacheProvider : BaseCacheProvider
     {
-        private readonly IConnectionMultiplexer _connection = connection ?? throw new ArgumentNullException(nameof(connection));
-        private readonly IDatabase _database = connection.GetDatabase();
-        private readonly ICacheKeyValidator _keyValidator = keyValidator ?? throw new ArgumentNullException(nameof(keyValidator));
-        private readonly JsonSerializerOptions _serializerOptions = jsonOptions?.Value ?? throw new ArgumentNullException(nameof(jsonOptions));
+        private readonly IConnectionMultiplexer _connection;
+        private readonly IDatabase _database;
+        private readonly ICacheKeyValidator _keyValidator;
+        private readonly JsonSerializerOptions _serializerOptions;
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Inizializza una nuova istanza del provider Redis
+        /// </summary>
+        /// <param name="connectionFactory">Factory per la connessione a Redis</param>
+        /// <param name="configuration">Configurazione del provider Redis</param>
+        /// <param name="logger">Logger per la tracciatura delle operazioni</param>
+        /// <param name="keyValidator">Validatore delle chiavi di cache</param>
+        /// <param name="jsonOptions">Opzioni per la serializzazione JSON</param>
+        /// <exception cref="ArgumentNullException">Generata quando uno dei parametri essenziali è null</exception>
+        public RedisCacheProvider(
+            IConnectionMultiplexerFactory connectionFactory,
+            IOptions<RedisCacheProviderConfiguration> configuration,
+            ILogger<RedisCacheProvider> logger,
+            ICacheKeyValidator keyValidator,
+            IOptions<JsonSerializerOptions> jsonOptions)
+            : base(logger)
+        {
+            ArgumentNullException.ThrowIfNull(connectionFactory);
+            ArgumentNullException.ThrowIfNull(configuration);
+            ArgumentNullException.ThrowIfNull(keyValidator);
+            ArgumentNullException.ThrowIfNull(jsonOptions);
+
+            _connection = connectionFactory.CreateConnection(configuration.Value.ConnectionString);
+            _database = _connection.GetDatabase();
+            _keyValidator = keyValidator;
+            _serializerOptions = jsonOptions.Value;
+        }
+
+        /// <summary>
+        /// Verifica l'esistenza di una chiave nella cache
+        /// </summary>
+        /// <param name="key">Chiave da verificare</param>
+        /// <param name="options">Opzioni della voce di cache (non utilizzate in questa implementazione)</param>
+        /// <param name="ct">Token di annullamento</param>
+        /// <returns>Risultato dell'operazione</returns>
         public override async Task<CacheOperationResult> ExistsAsync(
             string key,
             CacheEntryOptions? options = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken ct = default)
         {
             try
             {
                 _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
 
                 var exists = await _database.KeyExistsAsync(key).ConfigureAwait(false);
                 return new CacheOperationResult
@@ -46,7 +76,7 @@ namespace DSx.Caching.Providers.Redis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante la verifica esistenza chiave: {Key}", key);
+                Logger.LogError(ex, "Errore durante la verifica della chiave {Key}", key);
                 return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ConnectionError,
@@ -55,16 +85,23 @@ namespace DSx.Caching.Providers.Redis
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Ottiene un valore dalla cache
+        /// </summary>
+        /// <typeparam name="T">Tipo del valore da recuperare</typeparam>
+        /// <param name="key">Chiave da recuperare</param>
+        /// <param name="options">Opzioni della voce di cache (non utilizzate in questa implementazione)</param>
+        /// <param name="ct">Token di annullamento</param>
+        /// <returns>Risultato dell'operazione con il valore recuperato</returns>
         public override async Task<CacheOperationResult<T>> GetAsync<T>(
             string key,
             CacheEntryOptions? options = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken ct = default)
         {
             try
             {
                 _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
 
                 var redisValue = await _database.StringGetAsync(key).ConfigureAwait(false);
 
@@ -79,69 +116,87 @@ namespace DSx.Caching.Providers.Redis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante il recupero chiave: {Key}", key);
+                Logger.LogError(ex, "Errore durante il recupero della chiave {Key}", key);
                 return new CacheOperationResult<T>
                 {
-                    Status = ex is RedisException ?
-                        CacheOperationStatus.ConnectionError :
-                        CacheOperationStatus.ValidationError,
+                    Status = ex is RedisException ? CacheOperationStatus.ConnectionError
+                                                 : CacheOperationStatus.ValidationError,
                     Details = ex.Message
                 };
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Memorizza un valore nella cache
+        /// </summary>
+        /// <typeparam name="T">Tipo del valore da memorizzare</typeparam>
+        /// <param name="key">Chiave da utilizzare</param>
+        /// <param name="value">Valore da memorizzare</param>
+        /// <param name="options">Opzioni di scadenza della cache</param>
+        /// <param name="ct">Token di annullamento</param>
+        /// <returns>Risultato dell'operazione</returns>
         public override async Task<CacheOperationResult> SetAsync<T>(
             string key,
             T value,
             CacheEntryOptions? options = null,
-            CancellationToken cancellationToken = default)
+            CancellationToken ct = default)
         {
             try
             {
                 _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
 
                 var serializedValue = JsonSerializer.Serialize(value, _serializerOptions);
                 var expiry = options?.AbsoluteExpiration ?? options?.SlidingExpiration;
 
-                await _database.StringSetAsync(key, serializedValue, expiry).ConfigureAwait(false);
+                await _database.StringSetAsync(
+                    key,
+                    serializedValue,
+                    expiry,
+                    false,  // keepTtl
+                    When.Always,
+                    CommandFlags.None
+                ).ConfigureAwait(false);
+
                 return new CacheOperationResult { Status = CacheOperationStatus.Success };
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante il salvataggio chiave: {Key}", key);
+                Logger.LogError(ex, "Errore durante il salvataggio della chiave {Key}", key);
                 return new CacheOperationResult
                 {
-                    Status = ex is RedisException ?
-                        CacheOperationStatus.ConnectionError :
-                        CacheOperationStatus.ValidationError,
+                    Status = ex is RedisException ? CacheOperationStatus.ConnectionError
+                                                 : CacheOperationStatus.ValidationError,
                     Details = ex.Message
                 };
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Rimuove una chiave dalla cache
+        /// </summary>
+        /// <param name="key">Chiave da rimuovere</param>
+        /// <param name="ct">Token di annullamento</param>
+        /// <returns>Risultato dell'operazione</returns>
         public override async Task<CacheOperationResult> RemoveAsync(
             string key,
-            CancellationToken cancellationToken = default)
+            CancellationToken ct = default)
         {
             try
             {
                 _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
 
                 var deleted = await _database.KeyDeleteAsync(key).ConfigureAwait(false);
                 return new CacheOperationResult
                 {
-                    Status = deleted ?
-                        CacheOperationStatus.Success :
-                        CacheOperationStatus.NotFound
+                    Status = deleted ? CacheOperationStatus.Success
+                                      : CacheOperationStatus.NotFound
                 };
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante la rimozione chiave: {Key}", key);
+                Logger.LogError(ex, "Errore durante la rimozione della chiave {Key}", key);
                 return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ConnectionError,
@@ -150,13 +205,17 @@ namespace DSx.Caching.Providers.Redis
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Svuota completamente la cache
+        /// </summary>
+        /// <param name="ct">Token di annullamento</param>
+        /// <returns>Risultato dell'operazione</returns>
         public override async Task<CacheOperationResult> ClearAllAsync(
-            CancellationToken cancellationToken = default)
+            CancellationToken ct = default)
         {
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
+                ct.ThrowIfCancellationRequested();
 
                 foreach (var endpoint in _connection.GetEndPoints())
                 {
@@ -168,7 +227,7 @@ namespace DSx.Caching.Providers.Redis
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante lo svuotamento completo della cache");
+                Logger.LogError(ex, "Errore durante lo svuotamento della cache");
                 return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ConnectionError,
@@ -177,7 +236,9 @@ namespace DSx.Caching.Providers.Redis
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Rilascia le risorse asincrone
+        /// </summary>
         public override async ValueTask DisposeAsync()
         {
             if (!_disposed)
@@ -189,7 +250,10 @@ namespace DSx.Caching.Providers.Redis
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Rilascia le risorse gestite
+        /// </summary>
+        /// <param name="disposing">Indica se è in corso un dispose esplicito</param>
         protected override void Dispose(bool disposing)
         {
             if (!_disposed)
@@ -200,6 +264,22 @@ namespace DSx.Caching.Providers.Redis
                 }
                 base.Dispose(disposing);
                 _disposed = true;
+            }
+        }
+
+        /// <summary>
+        /// Factory per la creazione di connessioni Redis
+        /// </summary>
+        public class RedisConnectionMultiplexerFactory : IConnectionMultiplexerFactory
+        {
+            /// <summary>
+            /// Crea una nuova connessione Redis
+            /// </summary>
+            /// <param name="configurationString">Stringa di connessione</param>
+            /// <returns>Connessione multiplexer Redis</returns>
+            public IConnectionMultiplexer CreateConnection(string configurationString)
+            {
+                return ConnectionMultiplexer.Connect(configurationString);
             }
         }
     }

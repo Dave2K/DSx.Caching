@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace DSx.Caching.Providers.Memory
 {
     /// <summary>
-    /// Implementazione di un provider di cache in memoria
+    /// Fornisce un'implementazione di cache in memoria utilizzando IMemoryCache
     /// </summary>
     public sealed class MemoryCacheProvider : BaseCacheProvider
     {
@@ -19,8 +19,11 @@ namespace DSx.Caching.Providers.Memory
         private readonly ICacheKeyValidator _keyValidator;
 
         /// <summary>
-        /// Inizializza una nuova istanza del provider MemoryCache
+        /// Inizializza una nuova istanza della classe MemoryCacheProvider
         /// </summary>
+        /// <param name="cache">Istanza della cache in memoria</param>
+        /// <param name="logger">Logger per il tracciamento delle attività</param>
+        /// <param name="keyValidator">Validatore per le chiavi della cache</param>
         public MemoryCacheProvider(
             IMemoryCache cache,
             ILogger<MemoryCacheProvider> logger,
@@ -31,8 +34,11 @@ namespace DSx.Caching.Providers.Memory
             _keyValidator = keyValidator ?? throw new ArgumentNullException(nameof(keyValidator));
         }
 
+        /// <summary>
+        /// Verifica l'esistenza di una chiave nella cache
+        /// </summary>
         /// <inheritdoc/>
-        public override Task<CacheOperationResult> ExistsAsync(
+        public override async Task<CacheOperationResult> ExistsAsync(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default)
@@ -42,7 +48,7 @@ namespace DSx.Caching.Providers.Memory
                 _keyValidator.Validate(key);
                 cancellationToken.ThrowIfCancellationRequested();
 
-                return Task.FromResult(new CacheOperationResult
+                return await Task.FromResult(new CacheOperationResult
                 {
                     Status = _cache.TryGetValue(key, out _) ?
                         CacheOperationStatus.Success :
@@ -51,17 +57,20 @@ namespace DSx.Caching.Providers.Memory
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante la verifica esistenza chiave: {Key}", key);
-                return Task.FromResult(new CacheOperationResult
+                Logger.LogError(ex, "Errore durante la verifica della chiave {Key}", key);
+                return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
                     Details = ex.Message
-                });
+                };
             }
         }
 
+        /// <summary>
+        /// Recupera un valore dalla cache
+        /// </summary>
         /// <inheritdoc/>
-        public override Task<CacheOperationResult<T>> GetAsync<T>(
+        public override async Task<CacheOperationResult<T>> GetAsync<T>(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default)
@@ -71,33 +80,36 @@ namespace DSx.Caching.Providers.Memory
                 _keyValidator.Validate(key);
                 cancellationToken.ThrowIfCancellationRequested();
 
-                if (_cache.TryGetValue(key, out T? value) && value is not null)
+                if (_cache.TryGetValue(key, out T? value) && value != null)
                 {
-                    return Task.FromResult(new CacheOperationResult<T>
+                    return await Task.FromResult(new CacheOperationResult<T>
                     {
                         Status = CacheOperationStatus.Success,
                         Value = value
                     });
                 }
 
-                return Task.FromResult(new CacheOperationResult<T>
+                return await Task.FromResult(new CacheOperationResult<T>
                 {
                     Status = CacheOperationStatus.NotFound
                 });
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante il recupero chiave: {Key}", key);
-                return Task.FromResult(new CacheOperationResult<T>
+                Logger.LogError(ex, "Errore durante il recupero della chiave {Key}", key);
+                return new CacheOperationResult<T>
                 {
                     Status = CacheOperationStatus.ValidationError,
                     Details = ex.Message
-                });
+                };
             }
         }
 
+        /// <summary>
+        /// Memorizza un valore nella cache
+        /// </summary>
         /// <inheritdoc/>
-        public override Task<CacheOperationResult> SetAsync<T>(
+        public override async Task<CacheOperationResult> SetAsync<T>(
             string key,
             T value,
             CacheEntryOptions? options = null,
@@ -117,21 +129,24 @@ namespace DSx.Caching.Providers.Memory
                     cacheEntryOptions.SlidingExpiration = options.SlidingExpiration;
 
                 _cache.Set(key, value, cacheEntryOptions);
-                return Task.FromResult(new CacheOperationResult { Status = CacheOperationStatus.Success });
+                return await Task.FromResult(new CacheOperationResult { Status = CacheOperationStatus.Success });
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante il salvataggio chiave: {Key}", key);
-                return Task.FromResult(new CacheOperationResult
+                Logger.LogError(ex, "Errore durante il salvataggio della chiave {Key}", key);
+                return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
                     Details = ex.Message
-                });
+                };
             }
         }
 
+        /// <summary>
+        /// Rimuove una chiave dalla cache
+        /// </summary>
         /// <inheritdoc/>
-        public override Task<CacheOperationResult> RemoveAsync(
+        public override async Task<CacheOperationResult> RemoveAsync(
             string key,
             CancellationToken cancellationToken = default)
         {
@@ -141,21 +156,24 @@ namespace DSx.Caching.Providers.Memory
                 cancellationToken.ThrowIfCancellationRequested();
 
                 _cache.Remove(key);
-                return Task.FromResult(new CacheOperationResult { Status = CacheOperationStatus.Success });
+                return await Task.FromResult(new CacheOperationResult { Status = CacheOperationStatus.Success });
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante la rimozione chiave: {Key}", key);
-                return Task.FromResult(new CacheOperationResult
+                Logger.LogError(ex, "Errore durante la rimozione della chiave {Key}", key);
+                return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
                     Details = ex.Message
-                });
+                };
             }
         }
 
+        /// <summary>
+        /// Svuota completamente la cache
+        /// </summary>
         /// <inheritdoc/>
-        public override Task<CacheOperationResult> ClearAllAsync(
+        public override async Task<CacheOperationResult> ClearAllAsync(
             CancellationToken cancellationToken = default)
         {
             try
@@ -163,20 +181,22 @@ namespace DSx.Caching.Providers.Memory
                 if (_cache is MemoryCache memoryCache)
                     memoryCache.Compact(1.0);
 
-                return Task.FromResult(new CacheOperationResult { Status = CacheOperationStatus.Success });
+                return await Task.FromResult(new CacheOperationResult { Status = CacheOperationStatus.Success });
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante lo svuotamento completo della cache");
-                return Task.FromResult(new CacheOperationResult
+                Logger.LogError(ex, "Errore durante lo svuotamento della cache");
+                return new CacheOperationResult
                 {
                     Status = CacheOperationStatus.ValidationError,
                     Details = ex.Message
-                });
+                };
             }
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Rilascia le risorse gestite
+        /// </summary>
         protected override void Dispose(bool disposing)
         {
             if (!_disposed)
