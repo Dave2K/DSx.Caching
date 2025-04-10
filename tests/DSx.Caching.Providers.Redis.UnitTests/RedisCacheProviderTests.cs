@@ -1,270 +1,113 @@
 ﻿using DSx.Caching.Abstractions.Configurations;
 using DSx.Caching.Abstractions.Factories;
 using DSx.Caching.Abstractions.Models;
-using DSx.Caching.Abstractions.Validators;
-using DSx.Caching.Core;
+using DSx.Caching.Core.Validators;
+using DSx.Caching.Providers.Redis;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Moq;
 using StackExchange.Redis;
 using System;
 using System.Text.Json;
-using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
 
-namespace DSx.Caching.Providers.Redis
+namespace DSx.Caching.Providers.Redis.UnitTests
 {
     /// <summary>
-    /// Fornisce un'implementazione di caching basata su Redis
+    /// Test unitari per il provider RedisCacheProvider
     /// </summary>
-    public sealed class RedisCacheProvider : BaseCacheProvider
+    public class RedisCacheProviderTests : IDisposable
     {
-        private readonly IConnectionMultiplexer _connection;
-        private readonly IDatabase _database;
-        private readonly ICacheKeyValidator _keyValidator;
-        private readonly JsonSerializerOptions _serializerOptions;
+        private readonly Mock<IConnectionMultiplexer> _mockConnection;
+        private readonly Mock<IDatabase> _mockDatabase;
+        private readonly RedisCacheProvider _provider;
+        private bool _disposed;
 
         /// <summary>
-        /// Inizializza una nuova istanza del provider Redis
+        /// Inizializza una nuova istanza dei test
         /// </summary>
-        /// <param name="connectionFactory">Factory per la connessione a Redis</param>
-        /// <param name="configuration">Configurazione del provider Redis</param>
-        /// <param name="logger">Logger per la tracciatura delle operazioni</param>
-        /// <param name="keyValidator">Validatore delle chiavi di cache</param>
-        /// <param name="jsonOptions">Opzioni per la serializzazione JSON</param>
-        /// <exception cref="ArgumentNullException">Generata quando uno dei parametri essenziali è null</exception>
-        public RedisCacheProvider(
-            IConnectionMultiplexerFactory connectionFactory,
-            IOptions<RedisCacheProviderConfiguration> configuration,
-            ILogger<RedisCacheProvider> logger,
-            ICacheKeyValidator keyValidator,
-            IOptions<JsonSerializerOptions> jsonOptions)
-            : base(logger)
+        public RedisCacheProviderTests()
         {
-            ArgumentNullException.ThrowIfNull(connectionFactory);
-            ArgumentNullException.ThrowIfNull(configuration);
-            ArgumentNullException.ThrowIfNull(keyValidator);
-            ArgumentNullException.ThrowIfNull(jsonOptions);
+            _mockConnection = new Mock<IConnectionMultiplexer>();
+            _mockDatabase = new Mock<IDatabase>();
 
-            _connection = connectionFactory.CreateConnection(configuration.Value.ConnectionString);
-            _database = _connection.GetDatabase();
-            _keyValidator = keyValidator;
-            _serializerOptions = jsonOptions.Value;
+            var config = Options.Create(new RedisCacheProviderConfiguration
+            {
+                ConnectionString = "localhost:6379",
+                OperationTimeoutMs = 5000
+            });
+
+            var jsonOptions = Options.Create(new JsonSerializerOptions());
+            var logger = Mock.Of<ILogger<RedisCacheProvider>>();
+            var keyValidator = new CacheKeyValidator();
+
+            _mockConnection.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+                .Returns(_mockDatabase.Object);
+
+            var connectionFactory = new Mock<IConnectionMultiplexerFactory>();
+            connectionFactory.Setup(f => f.CreateConnection(It.IsAny<string>()))
+                .Returns(_mockConnection.Object);
+
+            _provider = new RedisCacheProvider(
+                connectionFactory.Object,
+                config,
+                logger,
+                keyValidator,
+                jsonOptions
+            );
         }
 
         /// <summary>
-        /// Verifica l'esistenza di una chiave nella cache
+        /// Verifica il corretto recupero di un elemento esistente
         /// </summary>
-        /// <param name="key">Chiave da verificare</param>
-        /// <param name="options">Opzioni della voce di cache</param>
-        /// <param name="ct">Token di annullamento</param>
-        /// <returns>Risultato dell'operazione</returns>
-        public override async Task<CacheOperationResult> ExistsAsync(
-            string key,
-            CacheEntryOptions? options = null,
-            CancellationToken ct = default)
+        [Fact]
+        public async Task GetAsync_ConChiaveEsistente_RestituisceValore()
         {
-            try
-            {
-                _keyValidator.Validate(key);
-                ct.ThrowIfCancellationRequested();
+            // Configurazione
+            const string testKey = "chiave_valida";
+            const string testValue = "\"valore_test\"";
 
-                var exists = await _database.KeyExistsAsync(key).ConfigureAwait(false);
-                return new CacheOperationResult
-                {
-                    Status = exists ? CacheOperationStatus.Success : CacheOperationStatus.NotFound
-                };
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Errore durante la verifica della chiave {Key}", key);
-                return new CacheOperationResult
-                {
-                    Status = CacheOperationStatus.ConnectionError,
-                    Details = ex.Message
-                };
-            }
+            _mockDatabase.Setup(d => d.StringGetAsync(testKey, CommandFlags.None))
+                .ReturnsAsync(testValue);
+
+            // Esecuzione
+            var result = await _provider.GetAsync<string>(testKey);
+
+            // Verifica
+            Assert.Equal(CacheOperationStatus.Success, result.Status);
+            Assert.Equal("valore_test", result.Value);
         }
 
         /// <summary>
-        /// Ottiene un valore dalla cache
+        /// Verifica la corretta gestione degli errori di connessione
         /// </summary>
-        /// <typeparam name="T">Tipo del valore da recuperare</typeparam>
-        /// <param name="key">Chiave da recuperare</param>
-        /// <param name="options">Opzioni della voce di cache</param>
-        /// <param name="ct">Token di annullamento</param>
-        /// <returns>Risultato dell'operazione con il valore recuperato</returns>
-        public override async Task<CacheOperationResult<T>> GetAsync<T>(
-            string key,
-            CacheEntryOptions? options = null,
-            CancellationToken ct = default)
+        [Fact]
+        public async Task GetAsync_ConErroreDiConnessione_RestituisceErrore()
         {
-            try
-            {
-                _keyValidator.Validate(key);
-                ct.ThrowIfCancellationRequested();
+            // Configurazione
+            const string testKey = "chiave_test";
+            _mockDatabase.Setup(d => d.StringGetAsync(testKey, CommandFlags.None))
+                .ThrowsAsync(new RedisConnectionException(ConnectionFailureType.UnableToConnect, "Errore simulato"));
 
-                var redisValue = await _database.StringGetAsync(key).ConfigureAwait(false);
+            // Esecuzione
+            var result = await _provider.GetAsync<string>(testKey);
 
-                if (redisValue.IsNullOrEmpty)
-                    return new CacheOperationResult<T> { Status = CacheOperationStatus.NotFound };
-
-                return new CacheOperationResult<T>
-                {
-                    Status = CacheOperationStatus.Success,
-                    Value = JsonSerializer.Deserialize<T>(redisValue.ToString(), _serializerOptions)
-                };
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Errore durante il recupero della chiave {Key}", key);
-                return new CacheOperationResult<T>
-                {
-                    Status = ex is RedisException ? CacheOperationStatus.ConnectionError
-                                                 : CacheOperationStatus.ValidationError,
-                    Details = ex.Message
-                };
-            }
+            // Verifica
+            Assert.Equal(CacheOperationStatus.ConnectionError, result.Status);
         }
 
         /// <summary>
-        /// Memorizza un valore nella cache
+        /// Rilascia le risorse del test
         /// </summary>
-        /// <typeparam name="T">Tipo del valore da memorizzare</typeparam>
-        /// <param name="key">Chiave da utilizzare</param>
-        /// <param name="value">Valore da memorizzare</param>
-        /// <param name="options">Opzioni di scadenza della cache</param>
-        /// <param name="ct">Token di annullamento</param>
-        /// <returns>Risultato dell'operazione</returns>
-        public override async Task<CacheOperationResult> SetAsync<T>(
-            string key,
-            T value,
-            CacheEntryOptions? options = null,
-            CancellationToken ct = default)
-        {
-            try
-            {
-                _keyValidator.Validate(key);
-                ct.ThrowIfCancellationRequested();
-
-                var serializedValue = JsonSerializer.Serialize(value, _serializerOptions);
-                var expiry = options?.AbsoluteExpiration ?? options?.SlidingExpiration;
-
-                await _database.StringSetAsync(
-                    key,
-                    serializedValue,
-                    expiry,
-                    false,
-                    When.Always,
-                    CommandFlags.None
-                ).ConfigureAwait(false);
-
-                return new CacheOperationResult { Status = CacheOperationStatus.Success };
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Errore durante il salvataggio della chiave {Key}", key);
-                return new CacheOperationResult
-                {
-                    Status = ex is RedisException ? CacheOperationStatus.ConnectionError
-                                                 : CacheOperationStatus.ValidationError,
-                    Details = ex.Message
-                };
-            }
-        }
-
-        /// <summary>
-        /// Rimuove una chiave dalla cache
-        /// </summary>
-        /// <param name="key">Chiave da rimuovere</param>
-        /// <param name="ct">Token di annullamento</param>
-        /// <returns>Risultato dell'operazione</returns>
-        public override async Task<CacheOperationResult> RemoveAsync(
-            string key,
-            CancellationToken ct = default)
-        {
-            try
-            {
-                _keyValidator.Validate(key);
-                ct.ThrowIfCancellationRequested();
-
-                var deleted = await _database.KeyDeleteAsync(key).ConfigureAwait(false);
-                return new CacheOperationResult
-                {
-                    Status = deleted ? CacheOperationStatus.Success
-                                    : CacheOperationStatus.NotFound
-                };
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Errore durante la rimozione della chiave {Key}", key);
-                return new CacheOperationResult
-                {
-                    Status = CacheOperationStatus.ConnectionError,
-                    Details = ex.Message
-                };
-            }
-        }
-
-        /// <summary>
-        /// Svuota completamente la cache
-        /// </summary>
-        /// <param name="ct">Token di annullamento</param>
-        /// <returns>Risultato dell'operazione</returns>
-        public override async Task<CacheOperationResult> ClearAllAsync(
-            CancellationToken ct = default)
-        {
-            try
-            {
-                ct.ThrowIfCancellationRequested();
-
-                foreach (var endpoint in _connection.GetEndPoints())
-                {
-                    var server = _connection.GetServer(endpoint);
-                    await server.FlushAllDatabasesAsync().ConfigureAwait(false);
-                }
-
-                return new CacheOperationResult { Status = CacheOperationStatus.Success };
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Errore durante lo svuotamento della cache");
-                return new CacheOperationResult
-                {
-                    Status = CacheOperationStatus.ConnectionError,
-                    Details = ex.Message
-                };
-            }
-        }
-
-        /// <summary>
-        /// Rilascia le risorse asincrone
-        /// </summary>
-        public override async ValueTask DisposeAsync()
+        public void Dispose()
         {
             if (!_disposed)
             {
-                await _connection.CloseAsync().ConfigureAwait(false);
-                await base.DisposeAsync().ConfigureAwait(false);
-                Dispose(false);
-                GC.SuppressFinalize(this);
-            }
-        }
-
-        /// <summary>
-        /// Rilascia le risorse gestite
-        /// </summary>
-        /// <param name="disposing">Indica se è in corso un dispose esplicito</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (!_disposed)
-            {
-                if (disposing)
-                {
-                    _connection?.Dispose();
-                }
-                base.Dispose(disposing);
+                _provider.Dispose();
                 _disposed = true;
             }
+            GC.SuppressFinalize(this);
         }
     }
 }
