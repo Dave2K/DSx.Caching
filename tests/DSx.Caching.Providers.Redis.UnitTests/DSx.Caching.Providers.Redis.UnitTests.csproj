@@ -24,6 +24,7 @@
 		<ProjectReference Include="..\..\sources\DSx.Caching\DSx.Caching.csproj" />
 	</ItemGroup>
 
+
 	<PropertyGroup>
 		<GenerateWSEnvironment>true</GenerateWSEnvironment>
 	</PropertyGroup>

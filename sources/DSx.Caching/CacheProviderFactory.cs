@@ -9,7 +9,7 @@ using System.Collections.Generic;
 namespace DSx.Caching
 {
     /// <summary>
-    /// Factory per la creazione dinamica dei provider di cache
+    /// Factory per la creazione di provider di cache
     /// </summary>
     public class CacheProviderFactory
     {
@@ -20,8 +20,6 @@ namespace DSx.Caching
         /// <summary>
         /// Inizializza una nuova istanza della factory
         /// </summary>
-        /// <param name="config">Configurazione dell'applicazione</param>
-        /// <param name="services">Provider di servizi DI</param>
         public CacheProviderFactory(IConfiguration config, IServiceProvider services)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -30,11 +28,9 @@ namespace DSx.Caching
         }
 
         /// <summary>
-        /// Ottiene un provider di cache per nome
+        /// Ottiene un provider di cache
         /// </summary>
-        /// <param name="providerName">Nome del provider (case-insensitive)</param>
-        /// <returns>Istanza del provider configurato</returns>
-        /// <exception cref="ProviderNotConfiguredException">Se il provider non è configurato</exception>
+        /// <param name="providerName">Nome del provider (opzionale)</param>
         public ICacheProvider GetProvider(string? providerName = null)
         {
             var targetProvider = providerName?.Trim() ?? _config["CacheSettings:DefaultProvider"];
@@ -42,10 +38,9 @@ namespace DSx.Caching
             if (string.IsNullOrWhiteSpace(targetProvider))
                 throw new InvalidOperationException("Nessun provider predefinito configurato");
 
-            if (_providers.TryGetValue(targetProvider, out var provider))
-                return provider.Value;
-
-            throw new ProviderNotConfiguredException($"Provider '{targetProvider}' non configurato");
+            return _providers.TryGetValue(targetProvider, out var provider)
+                ? provider.Value
+                : throw new ProviderNotConfiguredException($"Provider '{targetProvider}' non configurato");
         }
 
         private void InitializeProviders()
@@ -63,8 +58,8 @@ namespace DSx.Caching
         {
             return providerName.ToLowerInvariant() switch
             {
-                "redis" => ActivatorUtilities.GetServiceOrCreateInstance<RedisCacheProvider>(_services),
-                "memorycache" => ActivatorUtilities.GetServiceOrCreateInstance<MemoryCacheProvider>(_services),
+                "redis" => (ICacheProvider)ActivatorUtilities.GetServiceOrCreateInstance<RedisCacheProvider>(_services),
+                "memorycache" => (ICacheProvider)ActivatorUtilities.GetServiceOrCreateInstance<MemoryCacheProvider>(_services),
                 _ => throw new ProviderNotConfiguredException($"Provider '{providerName}' non supportato")
             };
         }
