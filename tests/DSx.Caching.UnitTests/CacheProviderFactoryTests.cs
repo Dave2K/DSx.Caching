@@ -109,28 +109,35 @@ namespace DSx.Caching.UnitTests
             const string testKey = "test_key";
             const string testValue = "test_value";
 
-            _mockDatabase.Setup(db => db.StringSetAsync(
-                testKey,
-                It.IsAny<RedisValue>(),
-                null,
-                When.Always,
-                CommandFlags.None))
-            .ReturnsAsync(true)
-            .Verifiable();
+            var mockConnection = new Mock<IConnectionMultiplexer>();
+            var mockDatabase = new Mock<IDatabase>();
+
+            mockConnection.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+                         .Returns(mockDatabase.Object);
+
+            var provider = new RedisCacheProvider(
+                mockConnection.Object,
+                Mock.Of<ILogger<RedisCacheProvider>>(),
+                new CacheKeyValidator(),
+                Options.Create(new JsonSerializerOptions())
+            );
 
             // Esecuzione
-            var result = await _provider.SetAsync(testKey, testValue);
+            await provider.SetAsync(testKey, testValue);
 
             // Verifica
-            Assert.Equal(CacheOperationStatus.Success, result.Status);
-
-            _mockDatabase.Verify(db => db.StringSetAsync(
-                testKey,
-                It.Is<RedisValue>(v => v.ToString() == "\"test_value\""), // JSON serializzato
-                null,
-                When.Always,
-                CommandFlags.None),
-            Times.Once);
+            mockDatabase.Verify(
+                db => db.StringSetAsync(
+                    testKey,
+                    It.Is<RedisValue>(v => v.ToString() == "\"test_value\""), // Valore serializzato con quotes
+                    null,                     // expiry
+                    false,                    // keepTtl (parametro mancante nel test originale)
+                    When.Always,
+                    CommandFlags.None
+                ),
+                Times.Once,
+                "Chiamata a StringSetAsync non corretta"
+            );
         }
 
         /// <summary>

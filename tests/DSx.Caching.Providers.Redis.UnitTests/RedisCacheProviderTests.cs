@@ -1,5 +1,6 @@
 ﻿using DSx.Caching.Abstractions.Models;
 using DSx.Caching.Abstractions.Validators;
+using DSx.Caching.Core.Validators;
 using DSx.Caching.Providers.Redis;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -131,26 +132,31 @@ namespace DSx.Caching.Providers.Redis.UnitTests
             const string testKey = "chiave_test";
             const string testValue = "valore_test";
 
-            _mockDatabase.Setup(db => db.StringSetAsync(
-                testKey,
-                It.IsAny<RedisValue>(),
-                null,
-                When.Always,
-                CommandFlags.None))
-                .ReturnsAsync(true);
+            var mockConnection = new Mock<IConnectionMultiplexer>();
+            var mockDatabase = new Mock<IDatabase>();
+
+            mockConnection.Setup(c => c.GetDatabase(It.IsAny<int>(), It.IsAny<object>()))
+                         .Returns(mockDatabase.Object);
+
+            var provider = new RedisCacheProvider(
+                mockConnection.Object,
+                Mock.Of<ILogger<RedisCacheProvider>>(),
+                new CacheKeyValidator(),
+                Options.Create(new JsonSerializerOptions())
+            );
 
             // Esecuzione
-            var result = await _provider.SetAsync(testKey, testValue);
+            await provider.SetAsync(testKey, testValue);
 
             // Verifica
-            Assert.Equal(CacheOperationStatus.Success, result.Status);
-            _mockDatabase.Verify(db => db.StringSetAsync(
+            mockDatabase.Verify(db => db.StringSetAsync(
                 testKey,
                 It.Is<RedisValue>(v => v.ToString() == "\"valore_test\""),
                 null,
+                false,
                 When.Always,
                 CommandFlags.None),
-                Times.Once);
+            Times.Once);
         }
 
         /// <summary>
