@@ -5,7 +5,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace DSx.Caching.Core
+namespace DSx.Caching.SharedKernel.Caching
 {
     /// <summary>
     /// Fornisce un'implementazione base per i provider di cache

@@ -6,7 +6,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
-		<ProjectReference Include="..\..\sources\DSx.Caching.Core\DSx.Caching.Core.csproj" />
+		<ProjectReference Include="..\..\sources\DSx.Caching.Core\_DSx.Caching.Core.csproj" />
 	</ItemGroup>
 
 </Project>

@@ -1,5 +1,4 @@
 ﻿using DSx.Caching.SharedKernel.Validation;
-using FluentAssertions;
 using Xunit;
 
 namespace DSx.Caching.SharedKernel.UnitTests.Validation

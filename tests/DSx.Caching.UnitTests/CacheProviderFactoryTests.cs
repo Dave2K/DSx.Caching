@@ -1,6 +1,4 @@
-﻿// File: tests/DSx.Caching.UnitTests/CacheProviderFactoryTests.cs
-using DSx.Caching;
-using DSx.Caching.Providers.Redis;
+﻿using DSx.Caching.Providers.Redis;
 using DSx.Caching.SharedKernel.Validation;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

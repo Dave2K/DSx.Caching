@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 
-namespace DSx.Caching.Core
+namespace DSx.Caching.SharedKernel.Caching
 {
     /// <summary>
     /// Provides base functionality for cache management operations

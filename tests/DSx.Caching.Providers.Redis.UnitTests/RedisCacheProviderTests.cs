@@ -1,10 +1,8 @@
-﻿using DSx.Caching.Abstractions.Models;
-using DSx.Caching.SharedKernel.Validation;
+﻿using DSx.Caching.SharedKernel.Validation;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using StackExchange.Redis;
-using System;
 using System.Text.Json;
 using Xunit;
 

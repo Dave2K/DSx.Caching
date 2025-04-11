@@ -8,8 +8,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace DSx.Caching.Providers.Redis
 {

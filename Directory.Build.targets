@@ -6,10 +6,10 @@
 
 		<!-- Configurazione dei percorsi per la generazione dell'ambiente -->
 		<PropertyGroup>
-			<WSEnvironmentTemplatePath>$(WSBuildfilesPath)WSEnvironment.template.cs</WSEnvironmentTemplatePath>
+			<WSEnvironmentTemplatePath>$(WSbuildPath)WSEnvironment.template.cs</WSEnvironmentTemplatePath>
 
 			<!-- Percorsi con escape dei caratteri per evitare errori -->
-			<EscapedResourcesPath>$([System.String]::Copy('$(WSBuildfilesPath)').Replace('\', '\\'))</EscapedResourcesPath>
+			<EscapedResourcesPath>$([System.String]::Copy('$(WSbuildPath)').Replace('\', '\\'))</EscapedResourcesPath>
 			<EscapedTempsPath>$([System.String]::Copy('$(WSTempsFolder)').Replace('\', '\\'))</EscapedTempsPath>
 
 			<!-- Percorso del file generato -->

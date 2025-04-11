@@ -15,16 +15,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_misc", "_misc", "{9C75B2BB
 		.github\workflows\ci.yml = .github\workflows\ci.yml
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
-		buildfiles\Directory.Packages.props = buildfiles\Directory.Packages.props
-		buildfiles\DotNetSettings.props = buildfiles\DotNetSettings.props
-		buildfiles\TestDependencies.props = buildfiles\TestDependencies.props
+		build\Directory.Packages.props = build\Directory.Packages.props
+		build\DotNetSettings.props = build\DotNetSettings.props
+		build\TestDependencies.props = build\TestDependencies.props
 		resources\TestSetting.json = resources\TestSetting.json
-		buildfiles\WSEnvironment.template = buildfiles\WSEnvironment.template
+		build\WSEnvironment.template = build\WSEnvironment.template
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Extensions", "sources\DSx.Caching.Extensions\DSx.Caching.Extensions.csproj", "{8758AC36-6791-DF0C-9023-61CE0F4265F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Core", "sources\DSx.Caching.Core\DSx.Caching.Core.csproj", "{A227B584-2FD8-B47A-9438-D758472FC69F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_DSx.Caching.Core", "sources\DSx.Caching.Core\_DSx.Caching.Core.csproj", "{A227B584-2FD8-B47A-9438-D758472FC69F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Providers.Memory", "sources\DSx.Caching.Providers.Memory\DSx.Caching.Providers.Memory.csproj", "{CD587572-EE9D-963C-EF20-B49E06726671}"
 EndProject
@@ -32,17 +32,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Providers.Redis
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Providers.Memory.UnitTests", "tests\DSx.Caching.Providers.Memory.UnitTests\DSx.Caching.Providers.Memory.UnitTests.csproj", "{B444A9EA-AA5A-4079-BCE1-DA894BF224D8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Core.UnitTests", "tests\DSx.Caching.Core.UnitTests\DSx.Caching.Core.UnitTests.csproj", "{59A2FF43-5B67-4B67-9D94-0A92980FD776}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_DSx.Caching.Core.UnitTests", "tests\DSx.Caching.Core.UnitTests\_DSx.Caching.Core.UnitTests.csproj", "{59A2FF43-5B67-4B67-9D94-0A92980FD776}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Providers.Redis.UnitTests", "tests\DSx.Caching.Providers.Redis.UnitTests\DSx.Caching.Providers.Redis.UnitTests.csproj", "{A7203EBC-197F-4FE2-A1B9-977BAB51EC49}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching", "sources\DSx.Caching\DSx.Caching.csproj", "{2D34726E-CC53-4DCC-9DBB-1564DB9B1C75}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_DSx.Caching", "sources\DSx.Caching\_DSx.Caching.csproj", "{2D34726E-CC53-4DCC-9DBB-1564DB9B1C75}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.UnitTests", "tests\DSx.Caching.UnitTests\DSx.Caching.UnitTests.csproj", "{714E21B4-143A-59E2-9C5A-9C145F5ADBDE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_DSx.Caching.UnitTests", "tests\DSx.Caching.UnitTests\_DSx.Caching.UnitTests.csproj", "{714E21B4-143A-59E2-9C5A-9C145F5ADBDE}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "app", "app", "{40412BAB-9455-4935-9302-86AECB634528}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp1", "samples\ConsoleApp1\ConsoleApp1.csproj", "{EC7982ED-D218-4B77-A651-66BC04204C1E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "_ConsoleApp1", "samples\ConsoleApp1\_ConsoleApp1.csproj", "{EC7982ED-D218-4B77-A651-66BC04204C1E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.DependencyInjection", "sources\DSx.Caching.DependencyInjection\DSx.Caching.DependencyInjection.csproj", "{2E891A7A-BA25-4169-AC32-2B93606B98A1}"
 EndProject

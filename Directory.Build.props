@@ -5,7 +5,7 @@
 		<WSPath>$(MSBuildThisFileDirectory)</WSPath>
 		
 		<!-- Percorsi per risorse e file temporanei -->
-		<WSBuildfilesPath>$(WSPath)buildfiles\</WSBuildfilesPath>
+		<WSbuildPath>$(WSPath)build\</WSbuildPath>
 		<WSArtifactsPath>$(WSPath)artifacts\</WSArtifactsPath>
 		<WSTempPath>$(WSPath)temp\</WSTempPath>
 		<WSResourcesPath>$(WSPath)Resources\</WSResourcesPath>
@@ -17,7 +17,7 @@
 	</PropertyGroup>
 
 	<!-- Importa i settaggi globali per i progetti -->
-	<Import Project="$(WSBuildfilesPath)DotNetSettings.props" />
+	<Import Project="$(WSbuildPath)DotNetSettings.props" />
 
 	<PropertyGroup>
 		<!-- PACCHETTI -->
@@ -31,8 +31,8 @@
 	</PropertyGroup>
 
 	<!-- Importa le reference dei progetti -->
-	<Import Project="$(WSBuildfilesPath)Directory.Packages.props" />
+	<Import Project="$(WSbuildPath)Directory.Packages.props" />
 
 	<!-- DIPENDENZE DI TEST (IMPORTATE SOLO SE NECESSARIO) -->
-	<Import Project="$(WSBuildfilesPath)TestDependencies.props" Condition="'$(IsTestProject)' == 'true'"/>
+	<Import Project="$(WSbuildPath)TestDependencies.props" Condition="'$(IsTestProject)' == 'true'"/>
 </Project>

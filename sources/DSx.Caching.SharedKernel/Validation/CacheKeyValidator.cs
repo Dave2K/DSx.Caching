@@ -1,6 +1,4 @@
-﻿// File: sources/DSx.Caching.SharedKernel/Validation/CacheKeyValidator.cs
-using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 
 namespace DSx.Caching.SharedKernel.Validation
 {

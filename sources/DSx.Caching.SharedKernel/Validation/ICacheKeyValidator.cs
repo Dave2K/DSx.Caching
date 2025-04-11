@@ -1,5 +1,4 @@
-﻿// File: sources/DSx.Caching.SharedKernel/Validation/ICacheKeyValidator.cs
-namespace DSx.Caching.SharedKernel.Validation
+﻿namespace DSx.Caching.SharedKernel.Validation
 {
     public interface ICacheKeyValidator
     {

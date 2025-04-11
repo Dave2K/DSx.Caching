@@ -1,12 +1,8 @@
-using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Abstractions.Models;
 using DSx.Caching.Core;
 using DSx.Caching.SharedKernel.Validation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace DSx.Caching.Providers.Memory
 {
@@ -22,7 +18,7 @@ namespace DSx.Caching.Providers.Memory
         /// Inizializza una nuova istanza della classe MemoryCacheProvider
         /// </summary>
         /// <param name="cache">Istanza della cache in memoria</param>
-        /// <param name="logger">Logger per il tracciamento delle attività</param>
+        /// <param name="logger">Logger per il tracciamento delle attivitï¿½</param>
         /// <param name="keyValidator">Validatore per le chiavi della cache</param>
         public MemoryCacheProvider(
             IMemoryCache cache,
