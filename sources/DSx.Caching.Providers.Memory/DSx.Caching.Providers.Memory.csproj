@@ -6,8 +6,8 @@
 	</ItemGroup>
 	
 	<ItemGroup>
-		<ProjectReference Include="..\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
 		<ProjectReference Include="..\DSx.Caching.Core\DSx.Caching.Core.csproj" />
+		<ProjectReference Include="..\DSx.Caching.SharedKernel\DSx.Caching.SharedKernel.csproj" />
 	</ItemGroup>
 
 </Project>

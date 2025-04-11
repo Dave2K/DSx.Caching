@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+		<PackageReference Include="System.Text.Json" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\..\sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
+		<ProjectReference Include="..\..\sources\DSx.Caching.SharedKernel\DSx.Caching.SharedKernel.csproj" />
+	</ItemGroup>
+
+</Project>

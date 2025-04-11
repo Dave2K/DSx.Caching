@@ -1,0 +1,152 @@
+DSx.Caching/
+├── src/
+│   ├── DSx.Caching.Abstractions/
+│   │   ├── Interfaces/
+│   │   │   ├── ICacheProvider.cs
+│   │   │   ├── ICacheFactory.cs
+│   │   │   ├── ICacheService.cs
+│   │   │   └── IDistributedCacheCoordinator.cs
+│   │   └── Models/
+│   │       ├── CacheOperationResult.cs
+│   │       └── CacheEntryDescriptor.cs
+│   │
+│   ├── DSx.Caching.SharedKernel/
+│   │   ├── Exceptions/
+│   │   │   ├── CacheException.cs
+│   │   │   ├── CacheConfigurationException.cs
+│   │   │   ├── CacheConnectionException.cs
+│   │   │   ├── CacheSerializationException.cs
+│   │   │   └── CacheKeyValidationException.cs
+│   │   ├── Validation/
+│   │   │   ├── CacheKeyValidator.cs
+│   │   │   ├── CacheKeyNormalizer.cs
+│   │   │   └── ICacheKeyValidator.cs
+│   │   ├── Models/
+│   │   │   ├── CacheEntryOptions.cs
+│   │   │   ├── CacheSettings.cs
+│   │   │   └── CircuitBreakerPolicy.cs
+│   │   ├── HealthChecks/
+│   │   │   ├── CacheHealthCheck.cs
+│   │   │   └── ICacheHealthMonitor.cs
+│   │   └── Utilities/
+│   │       ├── CacheKeyGenerator.cs
+│   │       └── SizeCalculator.cs
+│   │
+│   ├── DSx.Caching.Providers.Memory/
+│   │   ├── Configuration/
+│   │   │   └── MemoryCacheConfig.cs
+│   │   ├── Policies/
+│   │   │   └── MemoryEvictionPolicy.cs
+│   │   ├── Exceptions/
+│   │   │   └── MemoryCacheException.cs
+│   │   ├── MemoryCacheProvider.cs
+│   │   ├── MemoryCacheHealthCheck.cs
+│   │   └── MemoryCacheMetrics.cs
+│   │
+│   ├── DSx.Caching.Providers.Redis/
+│   │   ├── Configuration/
+│   │   │   └── RedisConnectionConfig.cs
+│   │   ├── Connection/
+│   │   │   ├── RedisConnectionPool.cs
+│   │   │   └── IRedisConnectionFactory.cs
+│   │   ├── LuaScripts/
+│   │   │   └── AtomicOperations.lua
+│   │   ├── RedisCacheProvider.cs
+│   │   ├── RedisHealthCheck.cs
+│   │   └── RedisTelemetryCollector.cs
+│   │
+│   ├── DSx.Caching.DependencyInjection/
+│   │   ├── Extensions/
+│   │   │   ├── ServiceCollectionExtensions.cs
+│   │   │   └── HealthCheckBuilderExtensions.cs
+│   │   └── Attributes/
+│   │       └── CacheableAttribute.cs
+│   │
+│   ├── DSx.Caching.Instrumentation/
+│   │   ├── Metrics/
+│   │   │   ├── CacheMetrics.cs
+│   │   │   └── MeterProviderExtensions.cs
+│   │   └── Tracing/
+│   │       ├── CacheActivitySource.cs
+│   │       └── RedisInstrumentation.cs
+│   │
+│   └── DSx.Caching.Configuration/
+│       ├── Json/
+│       │   └── CacheSettingsSchema.json
+│       ├── CacheConfigLoader.cs
+│       └── EnvironmentVariableParser.cs
+│
+├── tests/
+│   ├── DSx.Caching.Abstractions.UnitTests/
+│   │   ├── Interfaces/
+│   │   │   ├── ICacheProviderTests.cs
+│   │   │   └── ICacheFactoryTests.cs
+│   │   └── Models/
+│   │       └── CacheOperationResultTests.cs
+│   │
+│   ├── DSx.Caching.SharedKernel.UnitTests/
+│   │   ├── Exceptions/
+│   │   │   ├── CacheExceptionTests.cs
+│   │   │   └── CacheKeyValidationExceptionTests.cs
+│   │   ├── Validation/
+│   │   │   ├── CacheKeyValidatorTests.cs
+│   │   │   └── CacheKeyNormalizerTests.cs
+│   │   └── Models/
+│   │       ├── CacheEntryOptionsTests.cs
+│   │       └── CircuitBreakerPolicyTests.cs
+│   │
+│   ├── DSx.Caching.Providers.Memory.UnitTests/
+│   │   ├── MemoryCacheProviderTests.cs
+│   │   ├── MemoryEvictionPolicyTests.cs
+│   │   └── MemoryCacheMetricsTests.cs
+│   │
+│   ├── DSx.Caching.Providers.Redis.UnitTests/
+│   │   ├── RedisConnectionPoolTests.cs
+│   │   ├── LuaScriptExecutorTests.cs
+│   │   └── RedisTelemetryCollectorTests.cs
+│   │
+│   └── DSx.Caching.IntegrationTests/
+│       ├── MultiProvider/
+│       │   ├── CacheCoherencyTests.cs
+│       │   └── FallbackStrategiesTests.cs
+│       └── StressTests/
+│           ├── HighLoadMemoryTests.cs
+│           └── RedisThroughputTests.cs
+│
+├── samples/
+│   ├── WebApiSample/
+│   │   ├── Controllers/
+│   │   │   └── ProductsController.cs
+│   │   ├── Startup.cs
+│   │   ├── appsettings.json
+│   │   └── CacheProfileConfiguration.cs
+│   │
+│   ├── ConsoleClient/
+│   │   ├── Program.cs
+│   │   ├── CacheOperationsDemo.cs
+│   │   └── BenchmarkRunner.cs
+│   │
+│   └── AzureFunctionsSample/
+│       ├── CacheTriggeredFunction.cs
+│       └── function.proj
+│
+├── docs/
+│   ├── Architecture/
+│   │   ├── CachingFlow.puml
+│   │   ├── ComponentDiagram.md
+│   │   └── DeploymentGuide.md
+│   └── ADRs/
+│       ├── 001-cache-invalidation-strategy.md
+│       └── 002-telemetry-integration.md
+│
+└── build/
+    ├── Common/
+    │   ├── Directory.Build.props
+    │   ├── Directory.Build.targets
+    │   └── StyleCop.ruleset
+    ├── NuGet/
+    │   ├── DSx.Caching.nuspec
+    │   └── Packaging.targets
+    └── CI/
+        ├── azure-pipelines.yml
+        └── github-actions.yml

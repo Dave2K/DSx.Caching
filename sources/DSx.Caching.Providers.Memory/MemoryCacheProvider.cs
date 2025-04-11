@@ -1,7 +1,7 @@
 using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Abstractions.Models;
-using DSx.Caching.Abstractions.Validators;
 using DSx.Caching.Core;
+using DSx.Caching.SharedKernel.Validation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;

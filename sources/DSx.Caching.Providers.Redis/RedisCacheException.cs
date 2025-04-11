@@ -1,39 +1,36 @@
-using DSx.Caching.Abstractions.Exceptions;
+using DSx.Caching.SharedKernel.Enums;
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace DSx.Caching.Providers.Redis
 {
     /// <summary>
-    /// Eccezione specifica per errori nella cache Redis
+    /// Eccezione specifica per errori nel provider Redis
     /// </summary>
-    public class RedisCacheException : CacheException
+    public class RedisCacheException : Exception
     {
         /// <summary>
-        /// Inizializza una nuova istanza con messaggio predefinito
+        /// Dettagli tecnici dell'errore (NUOVA IMPLEMENTAZIONE)
         /// </summary>
-        public RedisCacheException() : base("Errore nella cache Redis") { }
+        public string TechnicalDetails { get; }
 
         /// <summary>
-        /// Inizializza una nuova istanza con messaggio personalizzato
+        /// Crea una nuova istanza dell'eccezione
         /// </summary>
-        /// <param name="message">Messaggio descrittivo dell'errore</param>
-        public RedisCacheException(string message) : base(message) { }
+        public RedisCacheException(
+            ILogger<RedisCacheProvider> logger,
+            string message,
+            string technicalDetails,
+            Exception? inner = null)
+            : base(message, inner)
+        {
+            TechnicalDetails = technicalDetails;
 
-        /// <summary>
-        /// Inizializza una nuova istanza con messaggio ed eccezione interna
-        /// </summary>
-        /// <param name="message">Messaggio descrittivo</param>
-        /// <param name="innerException">Eccezione che ha causato l'errore</param>
-        public RedisCacheException(string message, Exception innerException)
-            : base(message, innerException) { }
-
-        /// <summary>
-        /// Ottiene i dettagli tecnici dell'errore
-        /// </summary>
-        public override string TechnicalDetails =>
-            $"ERRORE REDIS: {Message}{Environment.NewLine}" +
-            $"Tipo: {GetType().Name}{Environment.NewLine}" +
-            $"Stack Trace:{Environment.NewLine}{StackTrace}" +
-            (InnerException != null ? $"{Environment.NewLine}ECCEZIONE INTERNA: {InnerException.Message}" : "");
+            logger.LogError(
+                "Errore Redis: {Message}. Dettagli: {Details}",
+                message,
+                TechnicalDetails
+            );
+        }
     }
 }

@@ -8,18 +8,12 @@ using System.Collections.Generic;
 
 namespace DSx.Caching
 {
-    /// <summary>
-    /// Factory per la creazione di provider di cache
-    /// </summary>
     public class CacheProviderFactory
     {
         private readonly IConfiguration _config;
         private readonly IServiceProvider _services;
         private readonly Dictionary<string, Lazy<ICacheProvider>> _providers = new(StringComparer.OrdinalIgnoreCase);
 
-        /// <summary>
-        /// Inizializza una nuova istanza della factory
-        /// </summary>
         public CacheProviderFactory(IConfiguration config, IServiceProvider services)
         {
             _config = config ?? throw new ArgumentNullException(nameof(config));
@@ -27,10 +21,6 @@ namespace DSx.Caching
             InitializeProviders();
         }
 
-        /// <summary>
-        /// Ottiene un provider di cache
-        /// </summary>
-        /// <param name="providerName">Nome del provider (opzionale)</param>
         public ICacheProvider GetProvider(string? providerName = null)
         {
             var targetProvider = providerName?.Trim() ?? _config["CacheSettings:DefaultProvider"];
@@ -58,8 +48,8 @@ namespace DSx.Caching
         {
             return providerName.ToLowerInvariant() switch
             {
-                "redis" => (ICacheProvider)ActivatorUtilities.GetServiceOrCreateInstance<RedisCacheProvider>(_services),
-                "memorycache" => (ICacheProvider)ActivatorUtilities.GetServiceOrCreateInstance<MemoryCacheProvider>(_services),
+                "redis" => ActivatorUtilities.GetServiceOrCreateInstance<RedisCacheProvider>(_services),
+                "memorycache" => ActivatorUtilities.GetServiceOrCreateInstance<MemoryCacheProvider>(_services),
                 _ => throw new ProviderNotConfiguredException($"Provider '{providerName}' non supportato")
             };
         }

@@ -1,98 +1,52 @@
-﻿using DSx.Caching.Abstractions.Exceptions;
-using FluentAssertions;
-using System;
+﻿using System;
+using System.Runtime.Serialization;
+using DSx.Caching.SharedKernel.Exceptions;
 using Xunit;
 
 namespace DSx.Caching.Abstractions.UnitTests
 {
     /// <summary>
-    /// Test per la classe <see cref="CacheException"/>
+    /// Test suite per la gestione delle eccezioni nella cache
     /// </summary>
     public class CacheExceptionTests
     {
         /// <summary>
-        /// Verifica che il costruttore con messaggio imposti correttamente i dettagli tecnici
+        /// Verifica la corretta inizializzazione con messaggio ed eccezione interna
         /// </summary>
-        [Fact]
-        public void Costruttore_ConMessaggioValido_ImpostaTechnicalDetailsCorrettamente()
+        [Fact(DisplayName = "CTOR con messaggio e inner exception")]
+        public void CostruttoreConMessaggioEInner_InizializzaCorrettamente()
         {
             // Arrange
-            const string messaggio = "Errore di test";
+            var innerException = new InvalidOperationException();
+            const string messaggio = "Errore critico di cache";
 
             // Act
-            var ex = new CacheException(messaggio);
+            var exception = new CacheException(messaggio, innerException);
 
             // Assert
-            ex.TechnicalDetails.Should()
-                .Contain("Cache Failure: " + messaggio)
-                .And.Contain("Exception Type: DSx.Caching.Abstractions.Exceptions.CacheException");
+            Assert.Equal(messaggio, exception.Message);
+            Assert.Same(innerException, exception.InnerException);
         }
 
         /// <summary>
-        /// Verifica che le eccezioni interne vengano riportate nei dettagli tecnici
+        /// Verifica la corretta serializzazione/deserializzazione
         /// </summary>
-        [Fact]
-        public void Costruttore_ConEccezioneInterna_IncludiDettagliInnerException()
+        [Fact(DisplayName = "Serializzazione/Deserializzazione legacy")]
+        public void SerializzazioneDeserializzazione_Corretta()
         {
             // Arrange
-            var innerEx = new InvalidOperationException("Errore interno");
+            var originalException = new CacheException("Test Error");
 
             // Act
-            var exception = new CacheException("Messaggio principale", innerEx);
+#pragma warning disable SYSLIB0050
+            var info = new SerializationInfo(typeof(CacheException), new FormatterConverter());
+#pragma warning restore SYSLIB0050
+
+            originalException.GetObjectData(info, new StreamingContext());
+            var deserializedException = new CacheException(info, new StreamingContext());
 
             // Assert
-            exception.TechnicalDetails.Should()
-                .Contain("Inner Exception Type: System.InvalidOperationException")
-                .And.Contain("Inner Message: Errore interno");
-        }
-
-        /// <summary>
-        /// Verifica il comportamento con messaggi non validi (null/vuoti/spazi)
-        /// </summary>
-        /// <param name="messaggioNonValido">Valore non valido da testare</param>
-        [Theory]
-        [InlineData(null)]
-        [InlineData("")]
-        [InlineData("   ")]
-        public void Costruttore_ConMessaggioVuoto_GeneraArgumentException(string? messaggioNonValido)
-        {
-            // Act & Assert
-            Assert.Throws<ArgumentException>(() => new CacheException(messaggioNonValido!))
-                .ParamName.Should().Be("message");
-        }
-
-        /// <summary>
-        /// Verifica la presenza dello stack trace quando non ci sono eccezioni interne
-        /// </summary>
-        [Fact]
-        public void TechnicalDetails_SenzaInnerException_MostraStackTrace()
-        {
-            // Arrange
-            var ex = new CacheException("Test");
-
-            // Act
-            var details = ex.TechnicalDetails;
-
-            // Assert
-            details.Should()
-                .Contain("Stack Trace:")
-                .And.Contain("DSx.Caching.Abstractions.Exceptions.CacheException");
-        }
-
-        /// <summary>
-        /// Verifica la rimozione degli spazi bianchi nel messaggio
-        /// </summary>
-        [Fact]
-        public void ValidateMessage_TrimmaSpaziBianchi()
-        {
-            // Arrange
-            const string messaggioOriginale = "  Messaggio con spazi  ";
-
-            // Act
-            var ex = new CacheException(messaggioOriginale);
-
-            // Assert
-            ex.Message.Should().Be("Messaggio con spazi");
+            Assert.Equal(originalException.Message, deserializedException.Message);
         }
     }
 }

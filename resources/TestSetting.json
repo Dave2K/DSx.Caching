@@ -1,19 +1,14 @@
 {
-    "CacheSettings": {
-        "DefaultProvider": "Redis",
-        "Providers": [ "Redis", "MemoryCache" ],
-        "Redis": {
-            "DefaultDatabase": 0,
-            "ConnectionString": "172.30.62.107:6379",
-            "InstanceName": "FlexCoreApp",
-            "AbortOnConnectFail": false,
-            "ConnectTimeout": 5000,
-            "SyncTimeout": 5000
-        },
-        "MemoryCache": {
-            "SizeLimit": 1024,
-            "CompactionPercentage": 0.5,
-            "ExpirationScanFrequency": "00:05:00"
-        }
+  "CacheSettings": {
+    "DefaultProvider": "Redis",
+    "Providers": [ "Redis", "MemoryCache" ],
+    "Redis": {
+      "ConnectionString": "localhost:6379",
+      "InstanceName": "TestInstance",
+      "OperationTimeoutMs": 5000
+    },
+    "MemoryCache": {
+      "SizeLimit": 1024
     }
+  }
 }

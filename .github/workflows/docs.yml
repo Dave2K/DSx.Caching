@@ -1,0 +1,21 @@
+# .github/workflows/docs.yml
+name: Generate Diagrams
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup PlantUML
+        run: sudo apt-get install -y plantuml graphviz
+
+      - name: Generate SVG
+        run: plantuml -tsvg docs/**/*.puml
+
+      - name: Mermaid Export
+        uses: krzema12/mermaid-action@v1
+        with:
+          files: 'docs/**/*.md'
+          output: 'docs/generated/'
