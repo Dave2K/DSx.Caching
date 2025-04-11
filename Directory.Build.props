@@ -6,8 +6,8 @@
 		
 		<!-- Percorsi per risorse e file temporanei -->
 		<WSbuildPath>$(WSPath)build\</WSbuildPath>
-		<WSArtifactsPath>$(WSPath)artifacts\</WSArtifactsPath>
-		<WSTempPath>$(WSPath)temp\</WSTempPath>
+		<WSArtifactsPath>$(WSPath)_artifacts\</WSArtifactsPath>
+		<WSTempPath>$(WSPath)_temp\</WSTempPath>
 		<WSResourcesPath>$(WSPath)Resources\</WSResourcesPath>
 
 		<!-- Configurazioni di compilazione -->

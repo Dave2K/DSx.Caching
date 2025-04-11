@@ -1,7 +1,7 @@
 ﻿namespace DSx.Caching.Abstractions.Models
 {
     /// <summary>
-    /// Risultato generico di un'operazione di cache
+    /// Rappresenta il risultato generico di un'operazione sulla cache
     /// </summary>
     public class CacheOperationResult
     {
@@ -11,7 +11,7 @@
         public CacheOperationStatus Status { get; set; }
 
         /// <summary>
-        /// Dettagli aggiuntivi sull'operazione
+        /// Dettagli aggiuntivi sull'esito
         /// </summary>
         public string? Details { get; set; }
 
@@ -22,7 +22,7 @@
     }
 
     /// <summary>
-    /// Risultato di un'operazione di cache con valore di ritorno
+    /// Rappresenta un risultato tipizzato di un'operazione sulla cache
     /// </summary>
     /// <typeparam name="T">Tipo del valore restituito</typeparam>
     public class CacheOperationResult<T> : CacheOperationResult
@@ -31,31 +31,5 @@
         /// Valore restituito dall'operazione
         /// </summary>
         public T? Value { get; set; }
-    }
-
-    /// <summary>
-    /// Enumerazione degli stati possibili di un'operazione di cache
-    /// </summary>
-    public enum CacheOperationStatus
-    {
-        /// <summary>
-        /// Operazione completata con successo
-        /// </summary>
-        Success,
-
-        /// <summary>
-        /// Elemento non trovato
-        /// </summary>
-        NotFound,
-
-        /// <summary>
-        /// Errore di validazione
-        /// </summary>
-        ValidationError,
-
-        /// <summary>
-        /// Errore di connessione
-        /// </summary>
-        ConnectionError
     }
 }

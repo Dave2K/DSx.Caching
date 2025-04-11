@@ -3,21 +3,21 @@ using System.Collections.Generic;
 namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
-    /// Interfaccia factory per la creazione di istanze di provider di cache
+    /// Factory per la creazione di provider di cache
     /// </summary>
     public interface ICacheFactory
     {
         /// <summary>
-        /// Crea un'istanza di provider di cache con nome specificato
+        /// Crea un provider di cache specifico
         /// </summary>
-        /// <param name="name">Nome logico del provider</param>
-        /// <returns>Istanza configurata del provider di cache</returns>
+        /// <param name="name">Nome del provider (es: "Redis", "Memory")</param>
+        /// <returns>Istanza del provider</returns>
         ICacheProvider CreateProvider(string name);
 
         /// <summary>
-        /// Ottiene tutti i nomi dei provider registrati
+        /// Restituisce i nomi dei provider disponibili
         /// </summary>
-        /// <returns>Collezione dei nomi dei provider disponibili</returns>
+        /// <returns>Elenco dei nomi</returns>
         IEnumerable<string> GetProviderNames();
     }
 }

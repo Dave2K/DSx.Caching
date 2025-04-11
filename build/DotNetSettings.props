@@ -12,7 +12,7 @@
 		<!-- Versione C# più recente -->
 
 		<!-- DOCUMENTAZIONE -->
-		<!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<!-- Genera documentazione XML -->
 		<!--<WarningsAsErrors>CS1591</WarningsAsErrors>-->
 		<!-- Warning documentazione = errore -->

@@ -1,32 +1,32 @@
-using System;
 using System.Threading.Tasks;
 
-namespace DSx.Caching.Abstractions
+namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
-    /// Defines the contract for caching operations.
+    /// Fornisce un'interfaccia semplificata per le operazioni di caching
     /// </summary>
     public interface ICacheService
     {
         /// <summary>
-        /// Retrieves an item from the cache by key.
+        /// Ottiene un valore dalla cache
         /// </summary>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="key"/> is null.</exception>
+        /// <typeparam name="T">Tipo del valore</typeparam>
+        /// <param name="key">Chiave da recuperare</param>
+        /// <returns>Valore memorizzato</returns>
         Task<T> GetAsync<T>(string key);
 
         /// <summary>
-        /// Stores an item in the cache.
+        /// Memorizza un valore nella cache
         /// </summary>
-        /// <exception cref="ArgumentNullException">
-        /// Thrown if <paramref name="key"/> is null or <paramref name="value"/> is null.
-        /// </exception>
+        /// <typeparam name="T">Tipo del valore</typeparam>
+        /// <param name="key">Chiave da impostare</param>
+        /// <param name="value">Valore da memorizzare</param>
         Task SetAsync<T>(string key, T value);
 
         /// <summary>
-        /// Removes an item from the cache by key.
+        /// Rimuove un valore dalla cache
         /// </summary>
-        /// <exception cref="ArgumentException">Thrown if <paramref name="key"/> is empty.</exception>
-        /// <exception cref="ArgumentNullException">Thrown if <paramref name="key"/> is null.</exception>
+        /// <param name="key">Chiave da rimuovere</param>
         Task RemoveAsync(string key);
     }
 }

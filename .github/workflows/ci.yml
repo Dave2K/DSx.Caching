@@ -3,49 +3,34 @@ name: Test on Ubuntu
 on:
   push:
     branches:
-      - main  # Esegui il workflow quando fai un push sul branch 'main'
+      - main
   pull_request:
     branches:
-      - main  # Esegui anche su pull request che vanno verso 'main'
+      - main
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # Usa Ubuntu per eseguire il codice
+    runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout del codice
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
-      # Step 2: Setup .NET SDK (imposta la versione di .NET 9)
-      #- name: Set up .NET SDK
-      #  uses: actions/setup-dotnet@v3
-      #  with:
-      #    dotnet-version: '8.0.407'  # Imposta .NET SDK versione 9.0
+      # Imposta .NET 9 SDK
+      - name: Setup .NET 9 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.100"  # Versione esatta
 
-      # Step 3: Display .NET SDK version
-      #- name: Display .NET SDK version
-      #  run: dotnet --info
+      # Pulizia cache e restore
+      - name: Clean and Restore
+        run: |
+          dotnet nuget locals all --clear
+          dotnet restore --force-evaluate
 
-      # Step 4: Display platform name
-      #- name: Display platform name
-      #  run: |
-      #    if [ "$(uname)" == "Darwin" ]; then
-      #      echo "macOS"
-      #    elif [ "$(uname)" == "Linux" ]; then
-      #      echo "Linux"
-      #    elif [ "$(uname)" == "Windows_NT" ]; then
-      #      echo "Windows"
-      #    fi
+      # Build e Test
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
 
-      # Step 5: Ripristina le dipendenze
-      - name: Restore dependencies
-        run: dotnet restore
-
-      # Step 6: Costruisci il progetto
-      - name: Build the project
-        run: dotnet build --configuration Release
-
-      # Step 7: Esegui i test
-      - name: Run unit tests
-        run: dotnet test --configuration Release
+      - name: Test
+        run: dotnet test --configuration Release --no-build --collect:"XPlat Code Coverage"

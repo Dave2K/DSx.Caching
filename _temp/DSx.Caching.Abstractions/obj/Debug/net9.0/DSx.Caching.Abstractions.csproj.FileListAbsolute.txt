@@ -1,0 +1,15 @@
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_artifacts\DSx.Caching.Abstractions\Debug\net9.0\DSx.Caching.Abstractions.deps.json
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_artifacts\DSx.Caching.Abstractions\Debug\net9.0\DSx.Caching.Abstractions.dll
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_artifacts\DSx.Caching.Abstractions\Debug\net9.0\DSx.Caching.Abstractions.pdb
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_artifacts\DSx.Caching.Abstractions\Debug\net9.0\DSx.Caching.Abstractions.xml
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.csproj.AssemblyReference.cache
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.AssemblyInfoInputs.cache
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.AssemblyInfo.cs
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.csproj.CoreCompileInputs.cache
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.sourcelink.json
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.dll
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\refint\DSx.Caching.Abstractions.dll
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.xml
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\DSx.Caching.Abstractions.pdb
+C:\Users\david\WorkSpace\Sources\DSx-WorkSpace\DSx.Caching\_temp\DSx.Caching.Abstractions\obj\Debug\net9.0\ref\DSx.Caching.Abstractions.dll

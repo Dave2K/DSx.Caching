@@ -8,7 +8,6 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
 		<ProjectReference Include="..\..\sources\DSx.Caching.Providers.Redis\DSx.Caching.Providers.Redis.csproj" />
-		<ProjectReference Include="..\..\sources\DSx.Caching\_DSx.Caching.csproj" />
 		
 		 <ProjectReference Include="..\..\sources\DSx.Caching.SharedKernel\DSx.Caching.SharedKernel.csproj" />
 	</ItemGroup>
