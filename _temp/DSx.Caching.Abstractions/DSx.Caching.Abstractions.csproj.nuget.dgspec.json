@@ -13,7 +13,6 @@
         "packagesPath": "C:\\Users\\david\\.nuget\\packages\\",
         "outputPath": "C:\\Users\\david\\WorkSpace\\Sources\\DSx-WorkSpace\\DSx.Caching\\_temp\\DSx.Caching.Abstractions\\",
         "projectStyle": "PackageReference",
-        "centralPackageVersionsManagementEnabled": true,
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
@@ -54,46 +53,16 @@
           "dependencies": {
             "Microsoft.Extensions.Diagnostics.HealthChecks": {
               "target": "Package",
-              "version": "[9.0.4, )",
-              "versionCentrallyManaged": true
+              "version": "(, )"
             },
             "Microsoft.Extensions.Logging.Abstractions": {
               "target": "Package",
-              "version": "[9.0.4, )",
-              "versionCentrallyManaged": true
+              "version": "(, )"
             },
             "StackExchange.Redis": {
               "target": "Package",
-              "version": "[2.8.31, )",
-              "versionCentrallyManaged": true
+              "version": "(, )"
             }
-          },
-          "centralPackageVersions": {
-            "coverlet.collector": "6.0.4",
-            "FluentAssertions": "8.2.0",
-            "FluentValidation": "11.9.1",
-            "Microsoft.Extensions.Caching.Abstractions": "9.0.4",
-            "Microsoft.Extensions.Caching.Memory": "9.0.4",
-            "Microsoft.Extensions.Caching.StackExchangeRedis": "9.0.4",
-            "Microsoft.Extensions.Configuration": "9.0.4",
-            "Microsoft.Extensions.Configuration.Abstractions": "9.0.4",
-            "Microsoft.Extensions.Configuration.Binder": "9.0.4",
-            "Microsoft.Extensions.DependencyInjection": "9.0.4",
-            "Microsoft.Extensions.DependencyInjection.Abstractions": "9.0.4",
-            "Microsoft.Extensions.Diagnostics.HealthChecks": "9.0.4",
-            "Microsoft.Extensions.Diagnostics.HealthChecks.Abstractions": "9.0.4",
-            "Microsoft.Extensions.Logging": "9.0.4",
-            "Microsoft.Extensions.Logging.Abstractions": "9.0.4",
-            "Microsoft.Extensions.Options": "9.0.4",
-            "Microsoft.NET.Test.Sdk": "17.13.0",
-            "Moq": "4.20.72",
-            "StackExchange.Redis": "2.8.31",
-            "System.ComponentModel.Annotations": "5.0.0",
-            "System.Text.Json": "9.0.4",
-            "xunit": "2.9.3",
-            "xunit.abstractions": "2.0.3",
-            "xunit.extensibility.core": "2.9.3",
-            "xunit.runner.visualstudio": "3.0.2"
           },
           "imports": [
             "net461",

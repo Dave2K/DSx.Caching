@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DSx.Caching.Abstractions.UnitTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f395fbe82d1793742ca2be09ee865b954aff5e44")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b001b69595fa76019c60927f176629bc100ac416")]
 [assembly: System.Reflection.AssemblyProductAttribute("DSx.Caching.Abstractions.UnitTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DSx.Caching.Abstractions.UnitTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
