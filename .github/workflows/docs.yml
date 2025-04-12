@@ -15,7 +15,7 @@ jobs:
         run: plantuml -tsvg docs/**/*.puml
 
       - name: Mermaid Export
-        uses: krzema12/mermaid-action@v1
+        uses: krzema12/mermaid-action@v3
         with:
           files: 'docs/**/*.md'
           output: 'docs/generated/'
