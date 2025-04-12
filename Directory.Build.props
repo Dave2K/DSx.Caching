@@ -8,7 +8,7 @@
 		<WSbuildPath>$(WSPath)build\</WSbuildPath>
 		<WSArtifactsPath>$(WSPath)_artifacts\</WSArtifactsPath>
 		<WSTempPath>$(WSPath)_temp\</WSTempPath>
-		<WSResourcesPath>$(WSPath)Resources\</WSResourcesPath>
+		<WSResourcesPath>$(WSPath)</WSResourcesPath>
 
 		<!-- Configurazioni di compilazione -->
 		<OutputPath>$(WSArtifactsPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>

@@ -1,11 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-	  <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+		<ProjectReference Include="..\..\sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
+	  <PackageReference Update="coverlet.collector">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
+	  <PackageReference Update="xunit.runner.visualstudio">
+	    <PrivateAssets>all</PrivateAssets>
+	    <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	  </PackageReference>
 	</ItemGroup>
 
 </Project>
