@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: Build and Test .NET Project
 
 on:
   push:
@@ -12,12 +12,12 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup .NET 9 SDK
-        uses: actions/setup-dotnet@v3
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0"  # Ultima versione patch di .NET 9.0
+          dotnet-version: "9.0"  # Usa .NET 9.0, puoi cambiarlo in base alle necessità
 
       - name: Restore dependencies
         run: dotnet restore DSx.Caching.sln
@@ -25,36 +25,10 @@ jobs:
       - name: Build solution
         run: dotnet build DSx.Caching.sln --configuration Release --no-restore
 
-      - name: Run tests with coverage
+      - name: Run tests with xUnit
         run: |
-          dotnet test \
+          dotnet test DSx.Caching.sln \
             --configuration Release \
             --no-build \
             --logger "trx;LogFileName=TestResults.trx" \
-            --collect:"XPlat Code Coverage" \
-            --settings tests/coverlet.runsettings \
             --results-directory TestResults
-
-      - name: Install ReportGenerator
-        run: dotnet tool install --global dotnet-reportgenerator-globaltool
-
-      - name: Generate coverage report
-        run: |
-          reportgenerator \
-            "-reports:TestResults/**/coverage.cobertura.xml" \
-            "-targetdir:CoverageReport" \
-            "-reporttypes:HtmlInline"
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: TestResults
-          path: TestResults
-
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: CoverageReport
-          path: CoverageReport
