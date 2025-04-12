@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DSx.Caching.Abstractions.UnitTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b9a582faa7f40efb694f03aacd9ee16a4f44437f")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a1102e6a30a9abecf8984dfaf0a84b770b3a1d55")]
 [assembly: System.Reflection.AssemblyProductAttribute("DSx.Caching.Abstractions.UnitTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DSx.Caching.Abstractions.UnitTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
