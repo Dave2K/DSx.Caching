@@ -5,7 +5,7 @@
 		<WSPath>$(MSBuildThisFileDirectory)</WSPath>
 		
 		<!-- Percorsi per risorse e file temporanei -->
-		<WSBuildPath>$(WSPath)\</WSBuildPath>
+		<WSBuildPath>$(WSPath)</WSBuildPath>
 		<WSArtifactsPath>$(WSPath)_artifacts\</WSArtifactsPath>
 		<WSTempPath>$(WSPath)_temp\</WSTempPath>
 		<WSResourcesPath>$(WSPath)resources\</WSResourcesPath>
