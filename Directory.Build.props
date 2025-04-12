@@ -5,10 +5,10 @@
 		<WSPath>$(MSBuildThisFileDirectory)</WSPath>
 		
 		<!-- Percorsi per risorse e file temporanei -->
-		<WSbuildPath>$(WSPath)build\</WSbuildPath>
+		<WSBuildPath>$(WSPath)\</WSBuildPath>
 		<WSArtifactsPath>$(WSPath)_artifacts\</WSArtifactsPath>
 		<WSTempPath>$(WSPath)_temp\</WSTempPath>
-		<WSResourcesPath>$(WSPath)</WSResourcesPath>
+		<WSResourcesPath>$(WSPath)resources\</WSResourcesPath>
 
 		<!-- Configurazioni di compilazione -->
 		<OutputPath>$(WSArtifactsPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
@@ -16,8 +16,8 @@
 		<IntermediateOutputPath>$(BaseIntermediateOutputPath)obj\$(Configuration)\</IntermediateOutputPath>
 	</PropertyGroup>
 
-	<!-- Importa i settaggi globali per i progetti -->
-	<Import Project="$(WSbuildPath)DotNetSettings.props" />
+	<!-- Importa le reference dei progetti -->
+	<!-- <Import Project="$(WSBuildPath)Directory.Packages.props" /> -->
 
 	<PropertyGroup>
 		<!-- PACCHETTI -->
@@ -30,9 +30,9 @@
 		<!-- Progetto di test se il percorso contiene "tests" -->
 	</PropertyGroup>
 
-	<!-- Importa le reference dei progetti -->
-	<Import Project="$(WSbuildPath)Directory.Packages.props" />
+	<!-- Importa i settaggi globali per i progetti -->
+	<Import Project="$(WSBuildPath)DotNetSettings.props" />
 
 	<!-- DIPENDENZE DI TEST (IMPORTATE SOLO SE NECESSARIO) -->
-	<Import Project="$(WSbuildPath)TestDependencies.props" Condition="'$(IsTestProject)' == 'true'"/>
+	<Import Project="$(WSBuildPath)TestDependencies.props" Condition="'$(IsTestProject)' == 'true'"/>
 </Project>

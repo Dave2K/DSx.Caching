@@ -6,6 +6,6 @@
 # Ignora la cartella di Visual Studio Code
 .vscode/
 
-# Ignora file del progetto
-artifacts/
-temp/
+# Ignora cartelle del WorkSpace
+_artifacts/
+_temp/
