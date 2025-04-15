@@ -1,49 +1,46 @@
 ﻿using System;
-using System.Runtime.Serialization;
 using DSx.Caching.SharedKernel.Enums;
 
 namespace DSx.Caching.SharedKernel.Exceptions
 {
+    /// <summary>
+    /// Eccezione sollevata quando si verificano errori di connessione ai provider di cache
+    /// </summary>
+    /// <param name="message">Messaggio descrittivo dell'errore</param>
+    /// <param name="nomeProvider">Nome del provider di cache coinvolto</param>
+    /// <param name="codiceErrore">Codice identificativo univoco dell'errore</param>
+    /// <param name="livelloLog">Livello di gravità per il logging</param>
+    /// <param name="innerException">Eccezione originale</param>
     [Serializable]
-    public class CacheConnectionException : Exception
+    public class CacheConnectionException(
+        string message,
+        string nomeProvider,
+        string codiceErrore,
+        LivelloLog livelloLog,
+        Exception innerException) : Exception(message, innerException)
     {
-        public string NomeProvider { get; }
-        public string CodiceErrore { get; }
-        public LivelloLog LivelloLog { get; }
+        /// <summary>
+        /// Nome del provider di cache utilizzato
+        /// </summary>
+        public string NomeProvider { get; } = nomeProvider;
 
-        public CacheConnectionException(
-            string message,
-            string nomeProvider,
-            string codiceErrore,
-            LivelloLog livelloLog,
-            Exception innerException)
-            : base(message, innerException)
-        {
-            NomeProvider = nomeProvider;
-            CodiceErrore = codiceErrore;
-            LivelloLog = livelloLog;
-        }
+        /// <summary>
+        /// Codice identificativo dell'errore specifico
+        /// </summary>
+        public string CodiceErrore { get; } = codiceErrore;
 
-        protected CacheConnectionException(
-            SerializationInfo info,
-            StreamingContext context) : base(info, context)
-        {
-            NomeProvider = info.GetString(nameof(NomeProvider))!;
-            CodiceErrore = info.GetString(nameof(CodiceErrore))!;
-            LivelloLog = (LivelloLog)info.GetValue(nameof(LivelloLog), typeof(LivelloLog))!;
-        }
+        /// <summary>
+        /// Livello di gravità dell'errore
+        /// </summary>
+        public LivelloLog LivelloLog { get; } = livelloLog;
 
-        [Obsolete("Formatter-based serialization is obsolete. Use modern alternatives instead.")]
-#pragma warning disable SYSLIB0051
-        public override void GetObjectData(
-            SerializationInfo info,
-            StreamingContext context)
-        {
-            base.GetObjectData(info, context);
-            info.AddValue(nameof(NomeProvider), NomeProvider);
-            info.AddValue(nameof(CodiceErrore), CodiceErrore);
-            info.AddValue(nameof(LivelloLog), LivelloLog);
-        }
-#pragma warning restore SYSLIB0051
+        /// <summary>
+        /// Restituisce una rappresentazione stringa completa dell'errore
+        /// </summary>
+        public override string ToString() =>
+            $"{base.ToString()}\n" +
+            $"Provider: {NomeProvider}\n" +
+            $"Codice: {CodiceErrore}\n" +
+            $"Livello: {LivelloLog}";
     }
 }

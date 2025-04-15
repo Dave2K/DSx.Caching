@@ -3,23 +3,27 @@
 namespace DSx.Caching.SharedKernel.Exceptions
 {
     /// <summary>
-    /// Eccezione specifica per errori nelle chiavi della cache
+    /// Eccezione sollevata per errori di validazione delle chiavi di cache
     /// </summary>
+    /// <param name="message">Messaggio descrittivo</param>
+    /// <param name="codiceErrore">Codice univoco errore (es. KEY_001)</param>
+    /// <param name="livelloLog">Livello di gravità</param>
+    /// <param name="innerException">Eccezione originale</param>
     [Serializable]
-    public class CacheKeyException : CacheException
+    public class CacheKeyException(
+        string message,
+        string codiceErrore,
+        LivelloLog livelloLog,
+        Exception innerException) : CacheException(message, innerException)
     {
-        public string CodiceErrore { get; }
-        public LivelloLog LivelloLog { get; }
+        /// <summary>
+        /// Codice identificativo univoco dell'errore
+        /// </summary>
+        public string CodiceErrore { get; } = codiceErrore;
 
-        public CacheKeyException(
-            string message,
-            string codiceErrore,
-            LivelloLog livelloLog,
-            Exception innerException)
-            : base(message, innerException) // Chiamata al costruttore base corretto
-        {
-            CodiceErrore = codiceErrore;
-            LivelloLog = livelloLog;
-        }
+        /// <summary>
+        /// Livello di log raccomandato per questo tipo di errore
+        /// </summary>
+        public LivelloLog LivelloLog { get; } = livelloLog;
     }
 }

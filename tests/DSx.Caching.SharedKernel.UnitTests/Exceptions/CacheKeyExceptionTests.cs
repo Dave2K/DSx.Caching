@@ -1,12 +1,17 @@
 ﻿using DSx.Caching.SharedKernel.Enums;
 using DSx.Caching.SharedKernel.Exceptions;
-using System;
 using Xunit;
 
-namespace DSx.Caching.SharedKernel.UnitTests.Exceptions // Namespace corretto
+namespace DSx.Caching.SharedKernel.UnitTests.Exceptions
 {
+    /// <summary>
+    /// Test unitari per la classe <see cref="CacheKeyException"/>
+    /// </summary>
     public class CacheKeyExceptionTests
     {
+        /// <summary>
+        /// Verifica che il costruttore imposti correttamente tutte le proprietà
+        /// </summary>
         [Fact]
         public void Constructor_ShouldSetAllProperties()
         {
@@ -19,8 +24,7 @@ namespace DSx.Caching.SharedKernel.UnitTests.Exceptions // Namespace corretto
                 message: "Test",
                 codiceErrore: codice,
                 livelloLog: livello,
-                innerException: new ArgumentException("Invalid key")
-            );
+                innerException: new ArgumentException("Invalid key"));
 
             // Assert
             Assert.Equal(codice, ex.CodiceErrore);

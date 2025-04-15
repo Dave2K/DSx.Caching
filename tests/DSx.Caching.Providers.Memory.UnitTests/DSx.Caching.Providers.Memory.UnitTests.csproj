@@ -4,9 +4,4 @@
 		<PackageReference Include="Microsoft.Extensions.Logging" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\..\sources\DSx.Caching.Providers.Memory\DSx.Caching.Providers.Memory.csproj" />
-	  <ProjectReference Include="..\..\sources\DSx.Caching.SharedKernel\DSx.Caching.SharedKernel.csproj" />
-	</ItemGroup>
-
 </Project>

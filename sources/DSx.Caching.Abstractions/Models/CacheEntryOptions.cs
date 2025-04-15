@@ -1,22 +1,49 @@
-﻿namespace DSx.Caching.Abstractions.Models
+﻿using System;
+
+namespace DSx.Caching.Abstractions.Models
 {
     /// <summary>
-    /// Definisce le opzioni di scadenza per un elemento nella cache.
+    /// Opzioni configurabili per una entry della cache
     /// </summary>
     public class CacheEntryOptions
     {
         /// <summary>
-        /// Ottiene o imposta la durata assoluta dell'elemento nella cache. 
-        /// Dopo questo intervallo di tempo, l'elemento scade indipendentemente dagli accessi.
+        /// Durata assoluta prima della scadenza
         /// </summary>
-        /// <example>TimeSpan.FromMinutes(30)</example>
+        /// <value>Intervallo di tempo nullable</value>
         public TimeSpan? AbsoluteExpiration { get; set; }
 
         /// <summary>
-        /// Ottiene o imposta la durata "sliding" dell'elemento nella cache.
-        /// L'elemento scade se non viene acceduto per questo intervallo di tempo.
+        /// Durata di sliding prima della scadenza
         /// </summary>
-        /// <example>TimeSpan.FromMinutes(5)</example>
+        /// <value>Intervallo di tempo nullable</value>
         public TimeSpan? SlidingExpiration { get; set; }
+
+        /// <summary>
+        /// Priorità di ritenzione nella cache
+        /// </summary>
+        /// <value>Valore dell'enum CacheEntryPriority</value>
+        public CacheEntryPriority Priority { get; set; } = CacheEntryPriority.Normal;
+    }
+
+    /// <summary>
+    /// Priorità di mantenimento per le entry della cache
+    /// </summary>
+    public enum CacheEntryPriority
+    {
+        /// <summary>
+        /// Priorità standard
+        /// </summary>
+        Normal,
+
+        /// <summary>
+        /// Priorità alta (mantenuta più a lungo)
+        /// </summary>
+        High,
+
+        /// <summary>
+        /// Priorità bassa (prima ad essere rimossa)
+        /// </summary>
+        Low
     }
 }

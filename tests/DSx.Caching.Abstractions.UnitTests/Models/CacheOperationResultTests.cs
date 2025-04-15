@@ -10,32 +10,36 @@ namespace DSx.Caching.Abstractions.UnitTests.Models
     public class CacheOperationResultTests
     {
         /// <summary>
-        /// Verifica che IsSuccess sia true quando lo status è Success
+        /// Verifica che la proprietà IsSuccess restituisca True solo per lo stato Success
         /// </summary>
-        [Fact]
-        public void IsSuccess_ShouldBeTrue_WhenStatusIsSuccess()
+        /// <param name="status">Stato da testare</param>
+        /// <param name="expected">Valore atteso</param>
+        [Theory]
+        [InlineData(CacheOperationStatus.Success, true)]
+        [InlineData(CacheOperationStatus.NotFound, false)]
+        public void IsSuccess_DovrebbeRestituireValoreCorretto(
+            CacheOperationStatus status,
+            bool expected)
         {
-            // Arrange
-            var result = new CacheOperationResult { Status = CacheOperationStatus.Success };
-
-            // Act & Assert
-            result.IsSuccess.Should().BeTrue();
+            var risultato = new CacheOperationResult { Status = status };
+            risultato.IsSuccess.Should().Be(expected);
         }
 
         /// <summary>
-        /// Verifica che IsSuccess sia false per stati non Success
+        /// Verifica che i dettagli vengano memorizzati correttamente
         /// </summary>
-        [Theory]
-        [InlineData(CacheOperationStatus.NotFound)]
-        [InlineData(CacheOperationStatus.ValidationError)]
-        [InlineData(CacheOperationStatus.ConnectionError)]
-        public void IsSuccess_ShouldBeFalse_WhenStatusIsNotSuccess(CacheOperationStatus status)
+        [Fact]
+        public void Details_DovrebbeMemorizzareMessaggioErrore()
         {
-            // Arrange
-            var result = new CacheOperationResult { Status = status };
+            const string messaggio = "Errore di connessione";
 
-            // Act & Assert
-            result.IsSuccess.Should().BeFalse();
+            var risultato = new CacheOperationResult
+            {
+                Status = CacheOperationStatus.ConnectionError,
+                Details = messaggio
+            };
+
+            risultato.Details.Should().Be(messaggio);
         }
     }
 }

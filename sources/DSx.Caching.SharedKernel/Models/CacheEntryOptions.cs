@@ -1,22 +1,31 @@
 ﻿namespace DSx.Caching.SharedKernel.Models
 {
     /// <summary>
-    /// Opzioni di configurazione per le voci della cache
+    /// Opzioni configurabili per una voce nella cache.
     /// </summary>
     public class CacheEntryOptions
     {
         /// <summary>
-        /// Durata di validità della voce nella cache
+        /// Durata assoluta della voce nella cache.
         /// </summary>
-        public TimeSpan? Expiration { get; }
+        public TimeSpan? AbsoluteExpiration { get; }
 
         /// <summary>
-        /// Crea una nuova istanza delle opzioni
+        /// Durata rinnovabile della voce nella cache.
         /// </summary>
-        /// <param name="expiration">Tempo di scadenza della voce</param>
-        public CacheEntryOptions(TimeSpan? expiration)
+        public TimeSpan? SlidingExpiration { get; }
+
+        /// <summary>
+        /// Crea una nuova istanza di <see cref="CacheEntryOptions"/>.
+        /// </summary>
+        /// <param name="absoluteExpiration">Durata assoluta.</param>
+        /// <param name="slidingExpiration">Durata rinnovabile.</param>
+        public CacheEntryOptions(
+            TimeSpan? absoluteExpiration = null,
+            TimeSpan? slidingExpiration = null)
         {
-            Expiration = expiration;
+            AbsoluteExpiration = absoluteExpiration;
+            SlidingExpiration = slidingExpiration;
         }
     }
 }

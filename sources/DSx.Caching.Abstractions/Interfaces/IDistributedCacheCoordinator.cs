@@ -5,28 +5,24 @@ using System.Threading.Tasks;
 namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
-    /// Coordina operazioni avanzate in ambienti distribuiti con cache condivisa
+    /// Gestisce la coordinazione distribuita per operazioni su cache
     /// </summary>
     public interface IDistributedCacheCoordinator
     {
         /// <summary>
-        /// Acquisisce un lock distribuito per una chiave specifica
+        /// Acquisisce un lock distribuito
         /// </summary>
         /// <param name="key">Chiave su cui acquisire il lock</param>
-        /// <param name="timeout">Durata massima per l'acquisizione</param>
+        /// <param name="timeout">Timeout di attesa</param>
         /// <returns>Disposable per rilasciare il lock</returns>
         Task<IDisposable> AcquireLockAsync(string key, TimeSpan timeout);
 
         /// <summary>
-        /// Invalida una chiave su tutti i nodi del cluster
+        /// Invalida una chiave su tutti i nodi
         /// </summary>
         /// <param name="key">Chiave da invalidare</param>
+        /// <returns>Task asincrono</returns>
         Task InvalidateAcrossNodesAsync(string key);
-
-        /// <summary>
-        /// Sincronizza lo stato della cache tra tutti i nodi
-        /// </summary>
-        Task SyncStateAsync();
 
         /// <summary>
         /// Verifica lo stato di salute del coordinatore

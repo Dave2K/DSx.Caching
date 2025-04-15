@@ -8,22 +8,35 @@ using System.Threading.Tasks;
 namespace DSx.Caching.SharedKernel.Caching
 {
     /// <summary>
-    /// Fornisce un'implementazione base per i provider di cache
+    /// Classe base astratta per l'implementazione dei provider di cache
     /// </summary>
     /// <remarks>
-    /// Implementa il pattern Dispose e fornisce metodi astratti per le operazioni di base
+    /// Fornisce funzionalità base per la gestione del ciclo di vita e il tracking delle operazioni
     /// </remarks>
     public abstract class BaseCacheProvider(ILogger logger) : ICacheProvider, IDisposable, IAsyncDisposable
     {
-        /// <summary>
-        /// Indica se l'oggetto è stato già eliminato
-        /// </summary>
-        protected bool _disposed;
+        private bool _disposed;
+
+        /// <inheritdoc/>
+        public event EventHandler<CacheEventArgs>? BeforeOperation;
+
+        /// <inheritdoc/>
+        public event EventHandler<CacheEventArgs>? AfterOperation;
 
         /// <summary>
-        /// Logger per la registrazione delle attività
+        /// Logger per la tracciatura delle attività
         /// </summary>
-        protected readonly ILogger Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        protected ILogger Logger { get; } = logger;
+
+        /// <summary>
+        /// Verifica lo stato di disposed dell'oggetto
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">Se l'istanza è stata eliminata</exception>
+        protected void CheckDisposed()
+        {
+            if (_disposed)
+                throw new ObjectDisposedException(GetType().Name);
+        }
 
         /// <inheritdoc/>
         public abstract Task<CacheOperationResult> ExistsAsync(
@@ -57,26 +70,55 @@ namespace DSx.Caching.SharedKernel.Caching
         public void Dispose()
         {
             Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
         /// <inheritdoc/>
-        public virtual ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            Dispose();
-            return ValueTask.CompletedTask;
+            await DisposeAsyncCore().ConfigureAwait(false);
+            Dispose(false);
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>
-        /// Rilascia le risorse gestite e non gestite
+        /// Implementazione del pattern Dispose
         /// </summary>
-        /// <param name="disposing">True per rilasciare le risorse gestite</param>
+        /// <param name="disposing">Indica se è in corso una dispose esplicita</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed && disposing)
             {
-                // Rilascio risorse gestite
+                // Cleanup risorse gestite
             }
             _disposed = true;
+        }
+
+        /// <summary>
+        /// Implementazione asincrona del pattern Dispose
+        /// </summary>
+        protected virtual ValueTask DisposeAsyncCore() => ValueTask.CompletedTask;
+
+        /// <summary>
+        /// Gestione evento pre-operazione
+        /// </summary>
+        /// <param name="e">Argomenti dell'evento</param>
+        /// <exception cref="ArgumentNullException">Se gli argomenti sono null</exception>
+        protected virtual void OnBeforeOperation(CacheEventArgs e)
+        {
+            ArgumentNullException.ThrowIfNull(e);
+            BeforeOperation?.Invoke(this, e);
+        }
+
+        /// <summary>
+        /// Gestione evento post-operazione
+        /// </summary>
+        /// <param name="e">Argomenti dell'evento</param>
+        /// <exception cref="ArgumentNullException">Se gli argomenti sono null</exception>
+        protected virtual void OnAfterOperation(CacheEventArgs e)
+        {
+            ArgumentNullException.ThrowIfNull(e);
+            AfterOperation?.Invoke(this, e);
         }
     }
 }

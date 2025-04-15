@@ -1,38 +1,18 @@
 using System;
-using System.Runtime.Serialization;
+using System.Text.Json.Serialization;
 
 namespace DSx.Caching.Providers.Memory
 {
-    [Serializable]
-    public class MemoryCacheException : Exception
+    /// <summary>
+    /// Eccezione specifica per errori nella memoria cache
+    /// </summary>
+    [JsonConverter(typeof(MemoryCacheExceptionConverter))]
+    public class MemoryCacheException(string message, string technicalDetails, Exception? innerException = null)
+        : Exception(message, innerException)
     {
-        public string TechnicalDetails { get; }
-
-        // Costruttore completo
-        public MemoryCacheException(
-            string message,
-            string technicalDetails,
-            Exception inner)
-            : base(message, inner)
-        {
-            TechnicalDetails = technicalDetails;
-        }
-
-        // Costruttore serializzazione
-        protected MemoryCacheException(
-            SerializationInfo info,
-            StreamingContext context) : base(info, context)
-        {
-            TechnicalDetails = info.GetString(nameof(TechnicalDetails))!;
-        }
-
-        // Metodo serializzazione
-        public override void GetObjectData(
-            SerializationInfo info,
-            StreamingContext context)
-        {
-            base.GetObjectData(info, context);
-            info.AddValue(nameof(TechnicalDetails), TechnicalDetails);
-        }
+        /// <summary>
+        /// Dettagli tecnici dell'errore
+        /// </summary>
+        public string TechnicalDetails { get; } = technicalDetails;
     }
 }

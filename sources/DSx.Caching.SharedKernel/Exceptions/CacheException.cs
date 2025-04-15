@@ -1,35 +1,15 @@
 ﻿using System;
-using System.Runtime.Serialization;
 
 namespace DSx.Caching.SharedKernel.Exceptions
 {
     /// <summary>
-    /// Eccezione base per errori generici della cache
+    /// Classe base per tutte le eccezioni relative al sistema di caching
     /// </summary>
     [Serializable]
     public class CacheException : Exception
     {
         /// <summary>
-        /// Inizializza una nuova istanza della classe <see cref="CacheException"/>
-        /// </summary>
-        public CacheException() { }
-
-        /// <summary>
-        /// Inizializza una nuova istanza della classe <see cref="CacheException"/> con un messaggio specifico
-        /// </summary>
-        /// <param name="message">Messaggio che descrive l'errore</param>
-        public CacheException(string message) : base(ValidateMessage(message)) { }
-
-        /// <summary>
-        /// Inizializza una nuova istanza della classe <see cref="CacheException"/> con un messaggio e un'eccezione interna
-        /// </summary>
-        /// <param name="message">Messaggio che descrive l'errore</param>
-        /// <param name="innerException">Eccezione interna che ha causato l'errore</param>
-        public CacheException(string message, Exception innerException)
-            : base(ValidateMessage(message), innerException) { }
-
-        /// <summary>
-        /// Dettagli tecnici dell'errore (solo lettura)
+        /// Dettagli tecnici dell'errore per il troubleshooting
         /// </summary>
         public virtual string TechnicalDetails =>
             $"Cache Failure: {Message}{Environment.NewLine}" +
@@ -40,7 +20,25 @@ namespace DSx.Caching.SharedKernel.Exceptions
                   $"Inner Stack Trace: {Environment.NewLine}{InnerException.StackTrace}"
                 : $"Stack Trace: {Environment.NewLine}{StackTrace}");
 
-        // Validazione del messaggio
+        /// <summary>
+        /// Inizializza una nuova istanza della classe <see cref="CacheException"/>
+        /// </summary>
+        public CacheException() { }
+
+        /// <summary>
+        /// Inizializza una nuova istanza della classe con un messaggio specifico
+        /// </summary>
+        /// <param name="message">Messaggio che descrive l'errore</param>
+        public CacheException(string message) : base(ValidateMessage(message)) { }
+
+        /// <summary>
+        /// Inizializza una nuova istanza della classe con messaggio ed eccezione interna
+        /// </summary>
+        /// <param name="message">Messaggio descrittivo</param>
+        /// <param name="innerException">Eccezione originale</param>
+        public CacheException(string message, Exception innerException)
+            : base(ValidateMessage(message), innerException) { }
+
         private static string ValidateMessage(string message)
         {
             if (string.IsNullOrWhiteSpace(message))
@@ -48,9 +46,5 @@ namespace DSx.Caching.SharedKernel.Exceptions
 
             return message.Trim();
         }
-
-        // Costruttore per la deserializzazione (obsoleto ma necessario per compatibilità)
-        protected CacheException(SerializationInfo info, StreamingContext context)
-            : base(info, context) { }
     }
 }

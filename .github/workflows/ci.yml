@@ -17,7 +17,7 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "9.0"  # Usa .NET 9.0, puoi cambiarlo in base alle necessità
+          dotnet-version: "9.0"
 
       - name: Restore dependencies
         run: dotnet restore DSx.Caching.sln

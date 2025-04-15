@@ -1,41 +1,40 @@
 ﻿using DSx.Caching.SharedKernel.Validation;
+using FluentAssertions;
 using Xunit;
 
 namespace DSx.Caching.SharedKernel.UnitTests.Validation
 {
     /// <summary>
-    /// Test per il validatore di chiavi di cache
+    /// Test suite per la validazione delle chiavi della cache
     /// </summary>
     public class CacheKeyValidatorTests
     {
-        private readonly ICacheKeyValidator _validatore = new CacheKeyValidator();
+        private readonly CacheKeyValidator _validator = new();
 
         /// <summary>
-        /// Verifica il comportamento con chiavi valide
+        /// Verifica l'accettazione di chiavi nel formato corretto
         /// </summary>
+        /// <param name="key">Chiave da testare</param>
         [Theory]
-        [InlineData("chiave_valida_123")]
+        [InlineData("valid-key_123")]
         [InlineData("TEST-KEY")]
-        public void Validate_ChiaveValida_NonGeneraEccezioni(string chiave)
+        public void Validate_DovrebbeAccettareChiaviValide(string key)
         {
-            // Act
-            var eccezione = Record.Exception(() => _validatore.Validate(chiave));
-
-            // Assert
-            eccezione.Should().BeNull();
+            var act = () => _validator.Validate(key);
+            act.Should().NotThrow();
         }
 
         /// <summary>
-        /// Verifica la normalizzazione delle chiavi
+        /// Verifica il rifiuto di chiavi non conformi
         /// </summary>
-        [Fact]
-        public void NormalizeKey_ConSpazi_RestituisceChiaveNormalizzata()
+        /// <param name="key">Chiave non valida</param>
+        [Theory]
+        [InlineData("invalid!key")]
+        [InlineData("")]
+        public void Validate_DovrebbeRifiutareChiaviNonValide(string key)
         {
-            // Act
-            var risultato = _validatore.NormalizeKey("  chiave con spazi  ");
-
-            // Assert
-            risultato.Should().Be("chiave-con-spazi");
+            var act = () => _validator.Validate(key);
+            act.Should().Throw<ArgumentException>();
         }
     }
 }

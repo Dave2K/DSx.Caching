@@ -1,48 +1,67 @@
 ﻿using DSx.Caching.Abstractions.Interfaces;
 using FluentAssertions;
 using Moq;
+using System;
 using System.Collections.Generic;
 using Xunit;
 
 namespace DSx.Caching.Abstractions.UnitTests.Interfaces
 {
     /// <summary>
-    /// Test per <see cref="ICacheFactory"/>
+    /// Test per ICacheFactory
     /// </summary>
     public class CacheFactoryTests
     {
+        private readonly Mock<ICacheFactory> _mockFactory = new();
+
         /// <summary>
-        /// Verifica che GetProviderNames restituisca i provider configurati
+        /// Verifica la creazione di un provider valido
         /// </summary>
         [Fact]
-        public void GetProviderNames_ReturnsConfiguredProviders()
+        public void CreateProvider_DovrebbeRestituireProvider_ConNomeValido()
         {
             // Arrange
-            var expectedProviders = new List<string> { "Redis", "Memory" };
-            var mockFactory = new Mock<ICacheFactory>();
-            mockFactory.Setup(x => x.GetProviderNames()).Returns(expectedProviders);
+            var expectedProvider = new Mock<ICacheProvider>().Object;
+            _mockFactory.Setup(x => x.CreateProvider("valid"))
+                .Returns(expectedProvider);
 
             // Act
-            var providers = mockFactory.Object.GetProviderNames();
+            var provider = _mockFactory.Object.CreateProvider("valid");
 
             // Assert
-            providers.Should().BeEquivalentTo(expectedProviders);
+            provider.Should().BeSameAs(expectedProvider);
         }
 
         /// <summary>
-        /// Verifica che CreateProvider sollevi un'eccezione per nomi non validi
+        /// Verifica l'eccezione per provider non trovato
         /// </summary>
         [Fact]
-        public void CreateProvider_ThrowsException_ForInvalidName()
+        public void CreateProvider_DovrebbeSollevareEccezione_ConNomeNonValido()
         {
             // Arrange
-            var mockFactory = new Mock<ICacheFactory>();
-            mockFactory
-                .Setup(x => x.CreateProvider("Invalid"))
-                .Throws(new ArgumentException("Provider non supportato"));
+            _mockFactory.Setup(x => x.CreateProvider("invalid"))
+                .Throws(new ArgumentException("Provider non valido"));
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() => mockFactory.Object.CreateProvider("Invalid"));
+            Assert.Throws<ArgumentException>(() =>
+                _mockFactory.Object.CreateProvider("invalid"));
+        }
+
+        /// <summary>
+        /// Verifica l'elenco dei provider disponibili
+        /// </summary>
+        [Fact]
+        public void GetProviderNames_DovrebbeRestituireListaConfigurata()
+        {
+            // Arrange
+            var expected = new List<string> { "redis", "memory" };
+            _mockFactory.Setup(x => x.GetProviderNames()).Returns(expected);
+
+            // Act
+            var providers = _mockFactory.Object.GetProviderNames();
+
+            // Assert
+            providers.Should().Equal(expected);
         }
     }
 }

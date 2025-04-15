@@ -10,14 +10,17 @@ namespace DSx.Caching.Abstractions.Interfaces
         /// <summary>
         /// Crea un provider di cache specifico
         /// </summary>
-        /// <param name="name">Nome del provider (es: "Redis", "Memory")</param>
-        /// <returns>Istanza del provider</returns>
+        /// <param name="name">Nome del provider configurato</param>
+        /// <returns>Istanza del provider richiesto</returns>
+        /// <exception cref="System.ArgumentException">
+        /// Sollevata se il nome del provider non è valido
+        /// </exception>
         ICacheProvider CreateProvider(string name);
 
         /// <summary>
-        /// Restituisce i nomi dei provider disponibili
+        /// Elenca i nomi dei provider disponibili
         /// </summary>
-        /// <returns>Elenco dei nomi</returns>
+        /// <returns>Lista dei provider configurati</returns>
         IEnumerable<string> GetProviderNames();
     }
 }
