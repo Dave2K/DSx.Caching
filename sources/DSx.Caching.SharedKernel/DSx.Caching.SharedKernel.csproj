@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.ApplicationInsights" />
 		<PackageReference Include="Microsoft.Extensions.Logging" />
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 	</ItemGroup>
@@ -11,6 +12,10 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Resiliency\" />
 	</ItemGroup>
 
 </Project>

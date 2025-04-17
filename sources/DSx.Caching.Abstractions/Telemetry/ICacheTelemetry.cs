@@ -1,31 +1,31 @@
 ﻿namespace DSx.Caching.Abstractions.Telemetry
 {
     /// <summary>
-    /// Fornisce metriche e tracciamento per le operazioni di cache
+    /// Fornisce strumenti per il tracciamento delle metriche e delle operazioni della cache
     /// </summary>
     public interface ICacheTelemetry
     {
         /// <summary>
-        /// Registra una richiesta alla cache
+        /// Traccia una richiesta alla cache
         /// </summary>
-        /// <param name="operation">Tipo di operazione</param>
+        /// <param name="operationName">Nome dell'operazione</param>
         /// <param name="duration">Durata dell'operazione</param>
         /// <param name="success">Indicatore di successo</param>
-        void TrackRequest(string operation, TimeSpan duration, bool success);
+        void TrackRequest(string operationName, TimeSpan duration, bool success);
 
         /// <summary>
-        /// Registra una dipendenza esterna (es: Redis, SQL)
+        /// Traccia una dipendenza esterna (es. connessione a Redis)
         /// </summary>
         /// <param name="dependencyType">Tipo di dipendenza</param>
-        /// <param name="dependencyName">Nome identificativo</param>
+        /// <param name="dependencyName">Nome della dipendenza</param>
         /// <param name="success">Indicatore di successo</param>
         void TrackDependency(string dependencyType, string dependencyName, bool success);
 
         /// <summary>
-        /// Registra un'eccezione verificatasi
+        /// Traccia un'eccezione verificatasi durante le operazioni
         /// </summary>
         /// <param name="exception">Eccezione verificatasi</param>
         /// <param name="context">Contesto aggiuntivo</param>
-        void TrackException(System.Exception exception, IDictionary<string, object> context);
+        void TrackException(Exception exception, IDictionary<string, object> context);
     }
 }

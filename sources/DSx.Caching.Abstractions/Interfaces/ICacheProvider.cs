@@ -1,94 +1,111 @@
 using DSx.Caching.Abstractions.Models;
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
-    /// Definisce le operazioni base per un provider di cache
+    /// Defines the interface for a cache provider with asynchronous operations.
     /// </summary>
     public interface ICacheProvider : IDisposable, IAsyncDisposable
     {
         /// <summary>
-        /// Evento scatenato prima dell'esecuzione di un'operazione
+        /// Occurs before a cache operation is performed.
         /// </summary>
         event EventHandler<CacheEventArgs> BeforeOperation;
 
         /// <summary>
-        /// Evento scatenato dopo il completamento di un'operazione
+        /// Occurs after a cache operation is performed.
         /// </summary>
         event EventHandler<CacheEventArgs> AfterOperation;
 
         /// <summary>
-        /// Recupera un valore dalla cache
+        /// Retrieves a value from the cache with the specified key.
         /// </summary>
-        /// <typeparam name="T">Tipo del valore da recuperare</typeparam>
-        /// <param name="key">Chiave identificativa dell'elemento</param>
-        /// <param name="options">Opzioni aggiuntive per l'operazione</param>
-        /// <param name="cancellationToken">Token per l'annullamento dell'operazione</param>
-        /// <returns>
-        /// Risultato dell'operazione contenente il valore recuperato
-        /// </returns>
+        /// <typeparam name="T">The type of the value to retrieve.</typeparam>
+        /// <param name="key">The key identifying the entry.</param>
+        /// <param name="options">Optional cache entry settings.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A result object containing the operation status and value.</returns>
         Task<CacheOperationResult<T>> GetAsync<T>(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Memorizza un valore nella cache
+        /// Stores a value in the cache with the specified key and options.
         /// </summary>
-        /// <typeparam name="T">Tipo del valore da memorizzare</typeparam>
-        /// <param name="key">Chiave identificativa dell'elemento</param>
-        /// <param name="value">Valore da memorizzare</param>
-        /// <param name="options">Opzioni di memorizzazione</param>
-        /// <param name="cancellationToken">Token per l'annullamento dell'operazione</param>
-        /// <returns>
-        /// Risultato dell'operazione di memorizzazione
-        /// </returns>
+        /// <typeparam name="T">The type of the value to store.</typeparam>
+        /// <param name="key">The key identifying the entry.</param>
+        /// <param name="value">The value to store.</param>
+        /// <param name="options">Optional cache entry settings.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A result object indicating the operation status.</returns>
         Task<CacheOperationResult> SetAsync<T>(
             string key,
             T value,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default);
 
-        // Altri metodi con commenti XML...
+        /// <summary>
+        /// Removes a cache entry with the specified key.
+        /// </summary>
+        /// <param name="key">The key identifying the entry.</param>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A result object indicating the operation status.</returns>
+        Task<CacheOperationResult> RemoveAsync(
+            string key,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Clears all entries from the cache.
+        /// </summary>
+        /// <param name="cancellationToken">A token to cancel the operation.</param>
+        /// <returns>A result object indicating the operation status.</returns>
+        Task<CacheOperationResult> ClearAllAsync(
+            CancellationToken cancellationToken = default);
     }
 
     /// <summary>
-    /// Argomenti degli eventi delle operazioni di cache
+    /// Provides data for cache operation events.
     /// </summary>
     public sealed class CacheEventArgs(string key, CacheOperationType operationType) : EventArgs
     {
         /// <summary>
-        /// Chiave dell'elemento coinvolto nell'operazione
+        /// Gets the cache key associated with the event.
         /// </summary>
-        /// <value>Stringa identificativa della chiave</value>
         public string Key { get; } = key;
 
         /// <summary>
-        /// Tipo di operazione eseguita
+        /// Gets the type of cache operation.
         /// </summary>
-        /// <value>Valore dell'enum <see cref="CacheOperationType"/></value>
         public CacheOperationType OperationType { get; } = operationType;
     }
 
     /// <summary>
-    /// Tipologie di operazioni supportate sulla cache
+    /// Specifies the type of cache operation.
     /// </summary>
     public enum CacheOperationType
     {
         /// <summary>
-        /// Operazione di recupero
+        /// A read operation.
         /// </summary>
         Get,
 
         /// <summary>
-        /// Operazione di memorizzazione
+        /// A write operation.
         /// </summary>
         Set,
 
-        // Altri valori con commenti...
+        /// <summary>
+        /// A removal operation.
+        /// </summary>
+        Remove,
+
+        /// <summary>
+        /// A cache clearance operation.
+        /// </summary>
+        ClearAll
     }
 }
