@@ -17,9 +17,9 @@
 		</PropertyGroup>
 
 		<!-- Messaggi di debug per verificare il valore delle variabili -->
-		<Message Text="Valore GenerateWSEnvironment: $(GenerateWSEnvironment)" Importance="high" />
-		<Message Text="Valore WSEnvironmentTemplatePath: $(WSEnvironmentTemplatePath)" Importance="high" />
-		<Message Text="Valore WSEnvironmentFilePath: $(WSEnvironmentFilePath)" Importance="high" />
+		<Message Text="[DEBUG] Valore GenerateWSEnvironment: $(GenerateWSEnvironment)" Importance="high" />
+		<Message Text="[DEBUG] Valore WSEnvironmentTemplatePath: $(WSEnvironmentTemplatePath)" Importance="high" />
+		<Message Text="[DEBUG] Valore WSEnvironmentFilePath: $(WSEnvironmentFilePath)" Importance="high" />
 
 		<!-- Leggi il file template -->
 		<ReadLinesFromFile File="$(WSEnvironmentTemplatePath)">

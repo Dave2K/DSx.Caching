@@ -3,47 +3,59 @@
 namespace DSx.Caching.Abstractions.Models
 {
     /// <summary>
-    /// Opzioni configurabili per una entry della cache
+    /// Opzioni configurabili per una voce nella cache.
     /// </summary>
     public class CacheEntryOptions
     {
-        /// <summary>
-        /// Durata assoluta prima della scadenza
-        /// </summary>
-        /// <value>Intervallo di tempo nullable</value>
-        public TimeSpan? AbsoluteExpiration { get; set; }
+        private TimeSpan? _absoluteExpiration;
+        private TimeSpan? _slidingExpiration;
 
         /// <summary>
-        /// Durata di sliding prima della scadenza
+        /// Durata massima di validità della voce dalla creazione.
         /// </summary>
-        /// <value>Intervallo di tempo nullable</value>
-        public TimeSpan? SlidingExpiration { get; set; }
+        /// <exception cref="ArgumentException">Se il valore è negativo.</exception>
+        public TimeSpan? AbsoluteExpiration
+        {
+            get => _absoluteExpiration;
+            set
+            {
+                if (value?.Ticks < 0)
+                    throw new ArgumentException("Il valore non può essere negativo.", nameof(value));
+                _absoluteExpiration = value;
+            }
+        }
 
         /// <summary>
-        /// Priorità di ritenzione nella cache
+        /// Durata di validità dopo l'ultimo accesso alla voce.
         /// </summary>
-        /// <value>Valore dell'enum CacheEntryPriority</value>
+        /// <exception cref="ArgumentException">Se il valore è negativo.</exception>
+        public TimeSpan? SlidingExpiration
+        {
+            get => _slidingExpiration;
+            set
+            {
+                if (value?.Ticks < 0)
+                    throw new ArgumentException("Il valore non può essere negativo.", nameof(value));
+                _slidingExpiration = value;
+            }
+        }
+
+        /// <summary>
+        /// Priorità della voce per la gestione della memoria.
+        /// </summary>
         public CacheEntryPriority Priority { get; set; } = CacheEntryPriority.Normal;
     }
 
     /// <summary>
-    /// Priorità di mantenimento per le entry della cache
+    /// Definisce la priorità di una voce nella cache.
     /// </summary>
     public enum CacheEntryPriority
     {
-        /// <summary>
-        /// Priorità standard
-        /// </summary>
+        /// <summary> Priorità standard. </summary>
         Normal,
-
-        /// <summary>
-        /// Priorità alta (mantenuta più a lungo)
-        /// </summary>
+        /// <summary> Priorità alta (meno probabile rimozione). </summary>
         High,
-
-        /// <summary>
-        /// Priorità bassa (prima ad essere rimossa)
-        /// </summary>
+        /// <summary> Priorità bassa (più probabile rimozione). </summary>
         Low
     }
 }

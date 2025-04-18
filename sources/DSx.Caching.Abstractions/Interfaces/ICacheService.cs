@@ -1,34 +1,35 @@
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
-    /// Servizio principale per l'interazione con la cache
+    /// Definisce un servizio semplificato per l'interazione con la cache.
     /// </summary>
     public interface ICacheService
     {
         /// <summary>
-        /// Recupera un valore dalla cache
+        /// Recupera un valore dalla cache.
         /// </summary>
-        /// <typeparam name="T">Tipo del valore memorizzato</typeparam>
-        /// <param name="key">Chiave identificativa</param>
-        /// <returns>Valore memorizzato o default</returns>
-        Task<T> GetAsync<T>(string key);
+        /// <typeparam name="T">Tipo del valore.</typeparam>
+        /// <param name="key">Chiave associata al valore.</param>
+        /// <param name="cancellationToken">Token per l'annullamento dell'operazione.</param>
+        Task<T> GetAsync<T>(string key, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Memorizza un valore nella cache
+        /// Memorizza un valore nella cache.
         /// </summary>
-        /// <typeparam name="T">Tipo del valore da memorizzare</typeparam>
-        /// <param name="key">Chiave identificativa</param>
-        /// <param name="value">Valore da memorizzare</param>
-        /// <returns>Task asincrono</returns>
-        Task SetAsync<T>(string key, T value);
+        /// <typeparam name="T">Tipo del valore.</typeparam>
+        /// <param name="key">Chiave associata al valore.</param>
+        /// <param name="value">Valore da memorizzare.</param>
+        /// <param name="cancellationToken">Token per l'annullamento dell'operazione.</param>
+        Task SetAsync<T>(string key, T value, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Rimuove un elemento dalla cache
+        /// Rimuove una voce dalla cache.
         /// </summary>
-        /// <param name="key">Chiave identificativa</param>
-        /// <returns>Task asincrono</returns>
-        Task RemoveAsync(string key);
+        /// <param name="key">Chiave della voce da rimuovere.</param>
+        /// <param name="cancellationToken">Token per l'annullamento dell'operazione.</param>
+        Task RemoveAsync(string key, CancellationToken cancellationToken = default);
     }
 }

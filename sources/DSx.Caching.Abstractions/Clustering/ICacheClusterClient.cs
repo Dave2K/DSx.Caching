@@ -3,18 +3,24 @@
 namespace DSx.Caching.Abstractions.Clustering
 {
     /// <summary>
-    /// Client per il coordinamento di cache distribuite
+    /// Definisce le operazioni per la gestione di un cluster di cache distribuite.
     /// </summary>
     public interface ICacheClusterClient
     {
         /// <summary>
-        /// Invalida una chiave su tutti i nodi del cluster
+        /// Invalida una chiave su tutti i nodi del cluster.
         /// </summary>
-        /// <param name="key">Chiave da invalidare</param>
+        /// <param name="key">Chiave da invalidare.</param>
         Task BroadcastInvalidationAsync(string key);
 
         /// <summary>
-        /// Sincronizza lo stato della cache tra i nodi
+        /// Invalida tutte le chiavi corrispondenti a un pattern specificato.
+        /// </summary>
+        /// <param name="pattern">Pattern per filtrare le chiavi (es. "user_*").</param>
+        Task InvalidateByPatternAsync(string pattern);
+
+        /// <summary>
+        /// Sincronizza lo stato del cluster tra tutti i nodi.
         /// </summary>
         Task SyncClusterStateAsync();
     }

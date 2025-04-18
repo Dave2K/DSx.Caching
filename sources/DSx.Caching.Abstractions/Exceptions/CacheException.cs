@@ -3,34 +3,50 @@
 namespace DSx.Caching.Abstractions.Exceptions
 {
     /// <summary>
-    /// Eccezione base per tutti gli errori relativi alle operazioni di caching
+    /// Rappresenta un errore generico durante le operazioni sulla cache.
     /// </summary>
     /// <remarks>
-    /// Fornisce un codice errore standardizzato per una migliore gestione degli errori
+    /// Codici di errore supportati:
+    /// - <c>CACHE_000</c>: Errore generico non specificato.
+    /// - <c>CACHE_101</c>: Errore durante l'acquisizione di un lock distribuito.
+    /// - <c>CACHE_SERIALIZATION_ERR</c>: Errore durante la serializzazione/deserializzazione.
     /// </remarks>
     [Serializable]
-    public class CacheException(string message, string errorCode = "CACHE_000", Exception? innerException = null)
-        : Exception(message, innerException)
+    public class CacheException : Exception
     {
         /// <summary>
-        /// Codice univoco identificativo dell'errore
+        /// Codice univoco dell'errore.
         /// </summary>
-        /// <value>
-        /// Stringa nel formato CACHE_XXX dove XXX è un numero univoco
-        /// </value>
-        public string ErrorCode { get; } = errorCode;
+        public string ErrorCode { get; }
+
+        /// <summary>
+        /// Inizializza una nuova istanza della classe <see cref="CacheException"/>.
+        /// </summary>
+        public CacheException(string message, string errorCode = "CACHE_000", Exception? innerException = null)
+            : base(message, innerException)
+        {
+            ErrorCode = errorCode;
+        }
     }
 
     /// <summary>
-    /// Eccezione specifica per errori nei lock distribuiti
+    /// Eccezione sollevata per errori durante l'acquisizione di lock distribuiti.
     /// </summary>
     [Serializable]
-    public class CacheDistributedLockException(string resourceName, string message, Exception? inner = null)
-        : CacheException(message, "CACHE_101", inner)
+    public class CacheDistributedLockException : CacheException
     {
         /// <summary>
-        /// Nome della risorsa su cui si è verificato l'errore di lock
+        /// Nome della risorsa interessata.
         /// </summary>
-        public string ResourceName { get; } = resourceName;
+        public string ResourceName { get; }
+
+        /// <summary>
+        /// Inizializza una nuova istanza della classe <see cref="CacheDistributedLockException"/>.
+        /// </summary>
+        public CacheDistributedLockException(string resourceName, string message, Exception? inner = null)
+            : base(message, "CACHE_101", inner)
+        {
+            ResourceName = resourceName;
+        }
     }
 }

@@ -1,10 +1,9 @@
 ﻿using DSx.Caching.Abstractions.Models;
-using DSx.Caching.Abstractions.Policies;
 
-namespace DSx.Caching.SharedKernel.Policies
+namespace DSx.Caching.Abstractions.Policies
 {
     /// <summary>
-    /// Implementa una politica LRU (Least Recently Used) con scadenza temporale
+    /// Implementa una politica di rimozione basata sull'uso meno recente (LRU).
     /// </summary>
     public class LeastRecentlyUsedPolicy : ICachePolicy
     {
@@ -12,10 +11,10 @@ namespace DSx.Caching.SharedKernel.Policies
         private readonly int _maxAccessCount;
 
         /// <summary>
-        /// Inizializza una nuova istanza della politica LRU
+        /// Inizializza una nuova istanza della politica LRU.
         /// </summary>
-        /// <param name="maxAge">Durata massima di conservazione</param>
-        /// <param name="maxAccessCount">Numero massimo di accessi prima dello refresh</param>
+        /// <param name="maxAge">Durata massima di validità di una voce nella cache.</param>
+        /// <param name="maxAccessCount">Numero massimo di accessi consentiti prima della rimozione.</param>
         public LeastRecentlyUsedPolicy(TimeSpan maxAge, int maxAccessCount)
         {
             _maxAge = maxAge;
@@ -32,7 +31,7 @@ namespace DSx.Caching.SharedKernel.Policies
         /// <inheritdoc/>
         public bool ShouldRefresh(CacheEntryDescriptor entry)
         {
-            return entry.ReadCount % 10 == 0; // Refresh ogni 10 accessi
+            return entry.ReadCount % 10 == 0;
         }
 
         /// <inheritdoc/>

@@ -20,8 +20,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_misc", "_misc", "{9C75B2BB
 		WSEnvironment.template = WSEnvironment.template
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "app", "app", "{40412BAB-9455-4935-9302-86AECB634528}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Abstractions", "sources\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj", "{39C753AA-6F86-422B-9C12-2281E654600E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DSx.Caching.Abstractions.UnitTests", "tests\DSx.Caching.Abstractions.UnitTests\DSx.Caching.Abstractions.UnitTests.csproj", "{7B9D3530-B9BA-040D-5062-79A026992905}"
