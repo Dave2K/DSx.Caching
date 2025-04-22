@@ -1,17 +1,11 @@
-<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8"?>
 <RunSettings>
   <DataCollectionRunSettings>
     <DataCollectors>
       <DataCollector friendlyName="XPlat code coverage">
         <Configuration>
           <Format>cobertura</Format>
-          <Include>[DSx.Caching.Abstractions]*</Include>
-          <Exclude>
-            [*.Tests]*, 
-            [xunit.*]*, 
-            [Moq]*,
-            [FluentAssertions]*
-          </Exclude>
+          <Include>[DSx.Caching.*]*</Include>
           <ExcludeByFile>**/obj/**/*.cs</ExcludeByFile>
         </Configuration>
       </DataCollector>

@@ -1,2 +1,10 @@
 dotnet build /p:GenerateDocumentationFile=true
 
+
+# docker
+docker build -t dsx-caching .
+docker run -p 8080:80 dsx-caching
+
+# eseguire il locale
+dotnet format --verify
+dotnet test --settings:./tests/coverlet.runsettings
