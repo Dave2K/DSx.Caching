@@ -1,26 +1,26 @@
+using System;
 using System.Collections.Generic;
 
 namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
-    /// Factory per la creazione di provider di cache
+    /// Factory per la creazione di provider di cache.
     /// </summary>
     public interface ICacheFactory
     {
         /// <summary>
-        /// Crea un provider di cache specifico
+        /// Crea un'istanza del provider di cache specificato.
         /// </summary>
-        /// <param name="name">Nome del provider configurato</param>
-        /// <returns>Istanza del provider richiesto</returns>
-        /// <exception cref="System.ArgumentException">
-        /// Sollevata se il nome del provider non è valido
-        /// </exception>
+        /// <param name="name">Nome del provider (case-insensitive).</param>
+        /// <returns>Istanza del provider.</returns>
+        /// <exception cref="ArgumentNullException">Se name è null o vuoto.</exception>
+        /// <exception cref="ArgumentException">Se il provider non esiste.</exception>
         ICacheProvider CreateProvider(string name);
 
         /// <summary>
-        /// Elenca i nomi dei provider disponibili
+        /// Restituisce la lista dei nomi dei provider disponibili.
         /// </summary>
-        /// <returns>Lista dei provider configurati</returns>
+        /// <returns>Lista dei nomi dei provider.</returns>
         IEnumerable<string> GetProviderNames();
     }
 }

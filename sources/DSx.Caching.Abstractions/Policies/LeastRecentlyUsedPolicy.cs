@@ -1,43 +1,44 @@
 ﻿using DSx.Caching.Abstractions.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DSx.Caching.Abstractions.Policies
 {
     /// <summary>
     /// Implementa una politica di rimozione basata sull'uso meno recente (LRU).
     /// </summary>
-    public class LeastRecentlyUsedPolicy : ICachePolicy
+    public class LeastRecentlyUsedPolicy : ICacheEvictionPolicy
     {
-        private readonly TimeSpan _maxAge;
-        private readonly int _maxAccessCount;
+        private readonly TimeSpan _maxInactiveTime;
+        private readonly int _maxItemsToEvict;
 
         /// <summary>
         /// Inizializza una nuova istanza della politica LRU.
         /// </summary>
-        /// <param name="maxAge">Durata massima di validità di una voce nella cache.</param>
-        /// <param name="maxAccessCount">Numero massimo di accessi consentiti prima della rimozione.</param>
-        public LeastRecentlyUsedPolicy(TimeSpan maxAge, int maxAccessCount)
+        /// <param name="maxInactiveTime">Durata massima di inattività prima della rimozione.</param>
+        /// <param name="maxItemsToEvict">Numero massimo di elementi da rimuovere (0 = illimitato).</param>
+        public LeastRecentlyUsedPolicy(TimeSpan maxInactiveTime, int maxItemsToEvict = 0)
         {
-            _maxAge = maxAge;
-            _maxAccessCount = maxAccessCount;
+            _maxInactiveTime = maxInactiveTime;
+            _maxItemsToEvict = maxItemsToEvict;
         }
 
         /// <inheritdoc/>
-        public bool ShouldEvict(CacheEntryDescriptor entry)
+        public IEnumerable<string> GetEvictionCandidates(IEnumerable<CacheEntryDescriptor> entries)
         {
-            var age = DateTime.UtcNow - entry.LastAccessed;
-            return age > _maxAge || entry.ReadCount > _maxAccessCount;
-        }
+            if (entries == null)
+                throw new ArgumentNullException(nameof(entries));
 
-        /// <inheritdoc/>
-        public bool ShouldRefresh(CacheEntryDescriptor entry)
-        {
-            return entry.ReadCount % 10 == 0;
-        }
+            var cutoff = DateTime.UtcNow - _maxInactiveTime;
+            var candidates = entries
+                .Where(e => e.LastAccessed < cutoff)
+                .OrderBy(e => e.LastAccessed)
+                .Select(e => e.Key);
 
-        /// <inheritdoc/>
-        public int CalculateRetentionPriority(CacheEntryDescriptor entry)
-        {
-            return entry.ReadCount;
+            return _maxItemsToEvict > 0
+                ? candidates.Take(_maxItemsToEvict)
+                : candidates;
         }
     }
 }

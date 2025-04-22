@@ -1,65 +1,62 @@
 ﻿using DSx.Caching.Abstractions.Models;
 using DSx.Caching.Abstractions.Policies;
+using FluentAssertions;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Xunit;
 
-namespace DSx.Caching.SharedKernel.UnitTests.Policies
+namespace DSx.Caching.Abstractions.UnitTests.Policies
 {
     /// <summary>
-    /// Contiene i test per la classe <see cref="LeastRecentlyUsedPolicy"/>
+    /// Test per la politica di rimozione LRU (Least Recently Used).
     /// </summary>
     public class LeastRecentlyUsedPolicyTests
     {
         /// <summary>
-        /// Verifica l'eviction per voci più vecchie della durata massima
+        /// Verifica che gli elementi siano ordinati correttamente per data di accesso.
         /// </summary>
         [Fact]
-        public void ShouldEvict_WhenEntryExceedsMaxAge()
+        public void GetEvictionCandidates_DovrebbeOrdinarePerDataAccesso()
         {
             // Arrange
-            var policy = new LeastRecentlyUsedPolicy(TimeSpan.FromHours(1), 100);
-            var oldEntry = new CacheEntryDescriptor(
-                DateTime.UtcNow.AddHours(-2), 5, 1024, false);
+            var entries = new List<CacheEntryDescriptor>
+            {
+                new("key1", DateTime.UtcNow.AddHours(-3), 0, 0, false),
+                new("key2", DateTime.UtcNow.AddHours(-1), 0, 0, false),
+                new("key3", DateTime.UtcNow.AddHours(-5), 0, 0, false)
+            };
+
+            var policy = new LeastRecentlyUsedPolicy(TimeSpan.FromHours(2));
 
             // Act
-            var result = policy.ShouldEvict(oldEntry);
+            var result = policy.GetEvictionCandidates(entries);
 
             // Assert
-            Assert.True(result);
+            result.Should().ContainInOrder("key3", "key1");
         }
 
         /// <summary>
-        /// Verifica l'eviction per voci con troppi accessi
+        /// Verifica che venga rispettato il limite massimo di elementi da rimuovere.
         /// </summary>
         [Fact]
-        public void ShouldEvict_WhenEntryExceedsMaxAccessCount()
+        public void GetEvictionCandidates_DovrebbeRispettareIlLimiteMassimo()
         {
             // Arrange
-            var policy = new LeastRecentlyUsedPolicy(TimeSpan.MaxValue, 10);
-            var activeEntry = new CacheEntryDescriptor(
-                DateTime.UtcNow, 15, 2048, false);
+            var entries = Enumerable.Range(1, 10)
+                .Select(i => new CacheEntryDescriptor(
+                    $"key{i}",
+                    DateTime.UtcNow.AddHours(-i),
+                    0, 0, false))
+                .ToList();
+
+            var policy = new LeastRecentlyUsedPolicy(TimeSpan.FromMinutes(30), 3);
 
             // Act
-            var result = policy.ShouldEvict(activeEntry);
+            var result = policy.GetEvictionCandidates(entries);
 
             // Assert
-            Assert.True(result);
-        }
-
-        /// <summary>
-        /// Verifica il calcolo corretto della priorità di ritenzione
-        /// </summary>
-        [Fact]
-        public void CalculateRetentionPriority_ShouldReturnReadCount()
-        {
-            // Arrange
-            var policy = new LeastRecentlyUsedPolicy(TimeSpan.MaxValue, 100);
-            var entry = new CacheEntryDescriptor(DateTime.UtcNow, 25, 512, true);
-
-            // Act
-            var priority = policy.CalculateRetentionPriority(entry);
-
-            // Assert
-            Assert.Equal(entry.ReadCount, priority);
+            result.Should().HaveCount(3);
         }
     }
 }

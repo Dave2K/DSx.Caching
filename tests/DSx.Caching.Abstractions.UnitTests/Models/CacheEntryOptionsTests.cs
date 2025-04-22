@@ -1,47 +1,54 @@
 ﻿using DSx.Caching.Abstractions.Models;
+using FluentAssertions;
 using Xunit;
 
 namespace DSx.Caching.Abstractions.UnitTests.Models
 {
     /// <summary>
-    /// Test per verificare il comportamento della classe CacheEntryOptions
+    /// Test per le opzioni di configurazione della cache.
     /// </summary>
     public class CacheEntryOptionsTests
     {
         /// <summary>
-        /// Verifica che venga generata un'eccezione per valori di scadenza negativi
+        /// Verifica che AbsoluteExpiration accetti solo valori positivi.
         /// </summary>
-        [Fact]
-        public void CacheEntryOptions_DovrebbeValidareValoriNegativi()
+        [Theory]
+        [InlineData(0)]  // TimeSpan.Zero
+        [InlineData(-1)] // Valore negativo
+        public void AbsoluteExpiration_DovrebbeRifiutareValoriNonPositivi(int seconds)
         {
             // Arrange
             var options = new CacheEntryOptions();
+            var invalidValue = TimeSpan.FromSeconds(seconds);
 
-            // Act & Assert - AbsoluteExpiration negativo
-            var exAbsolute = Assert.Throws<ArgumentException>(() =>
-                options.AbsoluteExpiration = TimeSpan.FromTicks(-1));
-            Assert.Contains("non può essere negativo", exAbsolute.Message);
-
-            // Act & Assert - SlidingExpiration negativo
-            var exSliding = Assert.Throws<ArgumentException>(() =>
-                options.SlidingExpiration = TimeSpan.FromMinutes(-5));
-            Assert.Contains("non può essere negativo", exSliding.Message);
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => options.AbsoluteExpiration = invalidValue);
         }
 
         /// <summary>
-        /// Verifica l'assegnazione corretta dei valori di priorità
+        /// Verifica che SlidingExpiration accetti solo valori positivi.
         /// </summary>
         [Fact]
-        public void CacheEntryOptions_Priority_DovrebbeAccettareValoriValidi()
+        public void SlidingExpiration_DovrebbeRifiutareTimeSpanZero()
         {
             // Arrange
             var options = new CacheEntryOptions();
 
-            // Act
-            options.Priority = CacheEntryPriority.High;
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() => options.SlidingExpiration = TimeSpan.Zero);
+        }
+
+        /// <summary>
+        /// Verifica che Priority sia Normal di default.
+        /// </summary>
+        [Fact]
+        public void Priority_DovrebbeAvereValoreDefaultNormal()
+        {
+            // Arrange & Act
+            var options = new CacheEntryOptions();
 
             // Assert
-            Assert.Equal(CacheEntryPriority.High, options.Priority);
+            options.Priority.Should().Be(CacheEntryPriority.Normal);
         }
     }
 }

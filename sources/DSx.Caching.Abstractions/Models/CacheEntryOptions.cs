@@ -13,14 +13,14 @@ namespace DSx.Caching.Abstractions.Models
         /// <summary>
         /// Durata massima di validità della voce dalla creazione.
         /// </summary>
-        /// <exception cref="ArgumentException">Se il valore è negativo.</exception>
+        /// <exception cref="ArgumentException">Se il valore è zero o negativo.</exception>
         public TimeSpan? AbsoluteExpiration
         {
             get => _absoluteExpiration;
             set
             {
-                if (value?.Ticks < 0)
-                    throw new ArgumentException("Il valore non può essere negativo.", nameof(value));
+                if (value.HasValue && value.Value <= TimeSpan.Zero)
+                    throw new ArgumentException("La scadenza assoluta deve essere maggiore di zero.", nameof(value));
                 _absoluteExpiration = value;
             }
         }
@@ -28,14 +28,14 @@ namespace DSx.Caching.Abstractions.Models
         /// <summary>
         /// Durata di validità dopo l'ultimo accesso alla voce.
         /// </summary>
-        /// <exception cref="ArgumentException">Se il valore è negativo.</exception>
+        /// <exception cref="ArgumentException">Se il valore è zero o negativo.</exception>
         public TimeSpan? SlidingExpiration
         {
             get => _slidingExpiration;
             set
             {
-                if (value?.Ticks < 0)
-                    throw new ArgumentException("Il valore non può essere negativo.", nameof(value));
+                if (value.HasValue && value.Value <= TimeSpan.Zero)
+                    throw new ArgumentException("La scadenza sliding deve essere maggiore di zero.", nameof(value));
                 _slidingExpiration = value;
             }
         }
@@ -51,11 +51,11 @@ namespace DSx.Caching.Abstractions.Models
     /// </summary>
     public enum CacheEntryPriority
     {
-        /// <summary> Priorità standard. </summary>
+        /// <summary>Priorità bassa (più probabile rimozione).</summary>
+        Low,
+        /// <summary>Priorità standard.</summary>
         Normal,
-        /// <summary> Priorità alta (meno probabile rimozione). </summary>
-        High,
-        /// <summary> Priorità bassa (più probabile rimozione). </summary>
-        Low
+        /// <summary>Priorità alta (meno probabile rimozione).</summary>
+        High
     }
 }

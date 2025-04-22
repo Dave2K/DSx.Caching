@@ -6,57 +6,44 @@ using Xunit;
 namespace DSx.Caching.Abstractions.UnitTests.Health
 {
     /// <summary>
-    /// Test per l'interfaccia di monitoraggio salute cache
+    /// Test per verificare il comportamento del monitoraggio salute cache.
     /// </summary>
     public class CacheHealthMonitorTests
     {
         private readonly Mock<ICacheHealthMonitor> _mockMonitor = new();
 
         /// <summary>
-        /// Verifica che lo stato Healthy venga restituito correttamente
+        /// Verifica che GetHealthStatus restituisca Unhealthy quando configurato.
         /// </summary>
         [Fact]
-        public void GetHealthStatus_DovrebbeRestituireHealthy_QuandoConfigurato()
+        public void GetHealthStatus_DovrebbeRestituireUnhealthy_QuandoConfigurato()
         {
-            _mockMonitor
-                .Setup(x => x.GetHealthStatus())
-                .Returns(CacheHealthStatus.Healthy);
+            // Arrange
+            _mockMonitor.Setup(x => x.GetHealthStatus())
+                .Returns(CacheHealthStatus.Unhealthy);
 
+            // Act
             var result = _mockMonitor.Object.GetHealthStatus();
-            result.Should().Be(CacheHealthStatus.Healthy);
+
+            // Assert
+            result.Should().Be(CacheHealthStatus.Unhealthy);
         }
 
         /// <summary>
-        /// Verifica il calcolo corretto dell'hit ratio
+        /// Verifica che CalculateCacheHitRatio restituisca 1 quando tutti accessi sono validi.
         /// </summary>
         [Fact]
-        public void CalculateCacheHitRatio_DovrebbeRestituireValoreCorretto()
+        public void CalculateCacheHitRatio_DovrebbeRestituire1_PerCachePerfetta()
         {
-            const double expectedRatio = 0.85;
-            _mockMonitor
-                .Setup(x => x.CalculateCacheHitRatio())
-                .Returns(expectedRatio);
+            // Arrange
+            _mockMonitor.Setup(x => x.CalculateCacheHitRatio())
+                .Returns(1.0);
 
+            // Act
             var result = _mockMonitor.Object.CalculateCacheHitRatio();
-            result.Should().Be(expectedRatio);
-        }
 
-        /// <summary>
-        /// Verifica tutti gli stati possibili
-        /// </summary>
-        [Theory]
-        [InlineData(CacheHealthStatus.Healthy)]
-        [InlineData(CacheHealthStatus.Degraded)]
-        [InlineData(CacheHealthStatus.Unhealthy)]
-        [InlineData(CacheHealthStatus.Unknown)]
-        public void GetHealthStatus_DovrebbeSupportareTuttiGliStati(CacheHealthStatus status)
-        {
-            _mockMonitor
-                .Setup(x => x.GetHealthStatus())
-                .Returns(status);
-
-            var result = _mockMonitor.Object.GetHealthStatus();
-            result.Should().Be(status);
+            // Assert
+            result.Should().Be(1.0);
         }
     }
 }

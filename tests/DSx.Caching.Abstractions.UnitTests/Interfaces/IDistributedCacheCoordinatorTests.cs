@@ -1,5 +1,4 @@
-﻿// SOSTITUIRE TUTTO il contenuto del file
-using DSx.Caching.Abstractions.Interfaces;
+﻿using DSx.Caching.Abstractions.Interfaces;
 using FluentAssertions;
 using Moq;
 using System;
@@ -10,31 +9,60 @@ using Xunit;
 namespace DSx.Caching.Abstractions.UnitTests.Interfaces
 {
     /// <summary>
-    /// Test per il coordinatore distribuito di cache
+    /// Test per verificare il comportamento del coordinatore distribuito.
     /// </summary>
     public class DistributedCacheCoordinatorTests
     {
         private readonly Mock<IDistributedCacheCoordinator> _mockCoordinator = new();
 
         /// <summary>
-        /// Verifica l'acquisizione del lock distribuito
+        /// Verifica l'acquisizione corretta del lock.
         /// </summary>
         [Fact]
-        public async Task AcquireLockAsync_ReturnsDisposableLock()
+        public async Task AcquireLockAsync_DovrebbeRestituireDisposable()
         {
-            var disposableMock = new Mock<IDisposable>();
+            // Arrange
+            var mockLock = new Mock<IDisposable>();
             _mockCoordinator
                 .Setup(x => x.AcquireLockAsync(
-                    "key",
+                    It.IsAny<string>(),
                     It.IsAny<TimeSpan>(),
                     It.IsAny<CancellationToken>()))
-                .ReturnsAsync(disposableMock.Object);
+                .ReturnsAsync(mockLock.Object);
 
-            var lockObject = await _mockCoordinator.Object.AcquireLockAsync(
-                "key",
-                TimeSpan.FromSeconds(10));
+            // Act
+            var result = await _mockCoordinator.Object.AcquireLockAsync(
+                "test_key",
+                TimeSpan.FromSeconds(1),
+                CancellationToken.None);
 
-            lockObject.Should().NotBeNull();
+            // Assert
+            result.Should().NotBeNull();
+        }
+
+        /// <summary>
+        /// Verifica che il metodo AcquireLockAsync rispetti la cancellazione del token.
+        /// </summary>
+        [Fact]
+        public async Task AcquireLockAsync_DovrebbeFallire_SeCancellato()
+        {
+            // Arrange
+            var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            _mockCoordinator
+                .Setup(x => x.AcquireLockAsync(
+                    It.IsAny<string>(),
+                    It.IsAny<TimeSpan>(),
+                    It.Is<CancellationToken>(ct => ct.IsCancellationRequested)))
+                .ThrowsAsync(new OperationCanceledException());
+
+            // Act & Assert
+            await Assert.ThrowsAsync<OperationCanceledException>(() =>
+                _mockCoordinator.Object.AcquireLockAsync(
+                    "test_key",
+                    TimeSpan.FromSeconds(1),
+                    cts.Token));
         }
     }
 }

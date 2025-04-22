@@ -5,20 +5,19 @@ using Xunit;
 namespace DSx.Caching.Abstractions.UnitTests.Models
 {
     /// <summary>
-    /// Contiene i test unitari per la classe <see cref="CacheEntryDescriptor"/>
+    /// Test per verificare il comportamento della classe CacheEntryDescriptor.
     /// </summary>
     public class CacheEntryDescriptorTests
     {
         /// <summary>
-        /// Verifica che l'aggiornamento dopo una lettura incrementi il contatore
-        /// e aggiorni il timestamp correttamente
+        /// Verifica che l'aggiornamento dopo una lettura incrementi il contatore.
         /// </summary>
         [Fact]
         public void UpdateOnRead_ShouldIncrementReadCountAndUpdateTimestamp()
         {
             // Arrange
             var originalTime = DateTime.UtcNow.AddMinutes(-5);
-            var descriptor = new CacheEntryDescriptor(originalTime, 2, 1024, false);
+            var descriptor = new CacheEntryDescriptor("test_key", originalTime, 2, 1024, false);
 
             // Act
             descriptor.UpdateOnRead();
@@ -30,14 +29,13 @@ namespace DSx.Caching.Abstractions.UnitTests.Models
         }
 
         /// <summary>
-        /// Verifica che l'aggiornamento dopo una scrittura modifichi la dimensione,
-        /// imposti il flag di modifica e aggiorni il timestamp
+        /// Verifica che l'aggiornamento dopo una scrittura modifichi la dimensione.
         /// </summary>
         [Fact]
         public void UpdateOnWrite_ShouldUpdateSizeAndMarkAsDirty()
         {
             // Arrange
-            var descriptor = new CacheEntryDescriptor(DateTime.UtcNow, 0, 512, false);
+            var descriptor = new CacheEntryDescriptor("test_key", DateTime.UtcNow, 0, 512, false);
 
             // Act
             descriptor.UpdateOnWrite(2048);
@@ -49,13 +47,13 @@ namespace DSx.Caching.Abstractions.UnitTests.Models
         }
 
         /// <summary>
-        /// Verifica che il metodo MarkAsClean resetti correttamente il flag di modifica
+        /// Verifica che il metodo MarkAsClean resetti il flag di modifica.
         /// </summary>
         [Fact]
         public void MarkAsClean_ShouldResetDirtyFlag()
         {
             // Arrange
-            var descriptor = new CacheEntryDescriptor(DateTime.UtcNow, 0, 256, true);
+            var descriptor = new CacheEntryDescriptor("test_key", DateTime.UtcNow, 0, 256, true);
 
             // Act
             descriptor.MarkAsClean();

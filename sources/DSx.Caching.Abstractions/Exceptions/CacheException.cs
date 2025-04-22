@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Serialization;
 
 namespace DSx.Caching.Abstractions.Exceptions
 {
@@ -6,10 +7,7 @@ namespace DSx.Caching.Abstractions.Exceptions
     /// Rappresenta un errore generico durante le operazioni sulla cache.
     /// </summary>
     /// <remarks>
-    /// Codici di errore supportati:
-    /// - <c>CACHE_000</c>: Errore generico non specificato.
-    /// - <c>CACHE_101</c>: Errore durante l'acquisizione di un lock distribuito.
-    /// - <c>CACHE_SERIALIZATION_ERR</c>: Errore durante la serializzazione/deserializzazione.
+    /// Include un codice di errore univoco per identificare il tipo di problema.
     /// </remarks>
     [Serializable]
     public class CacheException : Exception
@@ -17,36 +15,38 @@ namespace DSx.Caching.Abstractions.Exceptions
         /// <summary>
         /// Codice univoco dell'errore.
         /// </summary>
+        /// <value>
+        /// Stringa che identifica la categoria dell'errore (es. "CACHE_000").
+        /// </value>
         public string ErrorCode { get; }
 
         /// <summary>
         /// Inizializza una nuova istanza della classe <see cref="CacheException"/>.
         /// </summary>
-        public CacheException(string message, string errorCode = "CACHE_000", Exception? innerException = null)
+        /// <param name="message">Messaggio descrittivo dell'errore.</param>
+        /// <param name="errorCode">Codice univoco dell'errore (default: "CACHE_000").</param>
+        /// <param name="innerException">Eccezione interna correlata.</param>
+        public CacheException(
+            string message,
+            string errorCode = "CACHE_000",
+            Exception? innerException = null)
             : base(message, innerException)
         {
             ErrorCode = errorCode;
         }
-    }
-
-    /// <summary>
-    /// Eccezione sollevata per errori durante l'acquisizione di lock distribuiti.
-    /// </summary>
-    [Serializable]
-    public class CacheDistributedLockException : CacheException
-    {
-        /// <summary>
-        /// Nome della risorsa interessata.
-        /// </summary>
-        public string ResourceName { get; }
 
         /// <summary>
-        /// Inizializza una nuova istanza della classe <see cref="CacheDistributedLockException"/>.
+        /// Costruttore per la deserializzazione (obsoleto in .NET 9).
         /// </summary>
-        public CacheDistributedLockException(string resourceName, string message, Exception? inner = null)
-            : base(message, "CACHE_101", inner)
+        /// <param name="info">Dati serializzati.</param>
+        /// <param name="context">Contesto di serializzazione.</param>
+        [Obsolete("Questo costruttore è obsoleto in .NET 9+")]
+        protected CacheException(
+            SerializationInfo info,
+            StreamingContext context)
+            : base(info, context)
         {
-            ResourceName = resourceName;
+            ErrorCode = info.GetString(nameof(ErrorCode)) ?? "CACHE_000";
         }
     }
 }

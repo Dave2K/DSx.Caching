@@ -7,6 +7,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Compile Include="Keys\DefaultCacheKeyGenerator.cs" />
 	  <Compile Include="Keys\ICacheKeyGenerator.cs" />
 	</ItemGroup>
 

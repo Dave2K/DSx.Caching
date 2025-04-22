@@ -9,67 +9,48 @@ using Xunit;
 namespace DSx.Caching.Abstractions.UnitTests.Interfaces
 {
     /// <summary>
-    /// Test per verificare il comportamento del provider di cache
+    /// Test per verificare il comportamento del provider di cache.
     /// </summary>
     public class CacheProviderTests
     {
         private readonly Mock<ICacheProvider> _mockProvider = new();
 
         /// <summary>
-        /// Verifica che GetAsync restituisca il valore corretto quando la chiave esiste
+        /// Verifica che GetAsync restituisca il valore corretto quando la chiave esiste.
         /// </summary>
         [Fact]
-        public async Task GetAsync_ReturnsValue_WhenKeyExists()
+        public async Task GetAsync_DovrebbeRestituireValore_SeChiaveEsiste()
         {
             // Arrange
-            const string testKey = "valid_key";
-            const string expectedValue = "test_value";
-
-            _mockProvider
-                .Setup(x => x.GetAsync<string>(
-                    testKey,
-                    It.IsAny<CacheEntryOptions>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new CacheOperationResult<string>
-                {
-                    Status = CacheOperationStatus.Success,
-                    Value = expectedValue
-                });
+            const string key = "chiave_valida";
+            const string value = "valore_test";
+            _mockProvider.Setup(x => x.GetAsync<string>(key, null, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new CacheOperationResult<string> { Status = CacheOperationStatus.Success, Value = value });
 
             // Act
-            var result = await _mockProvider.Object.GetAsync<string>(testKey);
+            var result = await _mockProvider.Object.GetAsync<string>(key);
 
             // Assert
             result.Status.Should().Be(CacheOperationStatus.Success);
-            result.Value.Should().Be(expectedValue);
+            result.Value.Should().Be(value);
         }
 
         /// <summary>
-        /// Verifica che GetAsync restituisca errore di connessione in caso di fallimento
+        /// Verifica che RemoveAsync completi l'operazione con successo.
         /// </summary>
         [Fact]
-        public async Task GetAsync_ReturnsConnectionError_WhenProviderFails()
+        public async Task RemoveAsync_DovrebbeCompletareConSuccesso()
         {
             // Arrange
-            const string testKey = "invalid_key";
-
-            _mockProvider
-                .Setup(x => x.GetAsync<string>(
-                    testKey,
-                    It.IsAny<CacheEntryOptions>(),
-                    It.IsAny<CancellationToken>()))
-                .ReturnsAsync(new CacheOperationResult<string>
-                {
-                    Status = CacheOperationStatus.ConnectionError,
-                    Details = "Simulated failure"
-                });
+            const string key = "chiave_da_rimuovere";
+            _mockProvider.Setup(x => x.RemoveAsync(key, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new CacheOperationResult { Status = CacheOperationStatus.Success });
 
             // Act
-            var result = await _mockProvider.Object.GetAsync<string>(testKey);
+            var result = await _mockProvider.Object.RemoveAsync(key);
 
             // Assert
-            result.Status.Should().Be(CacheOperationStatus.ConnectionError);
-            result.Details.Should().NotBeNullOrEmpty();
+            result.Status.Should().Be(CacheOperationStatus.Success);
         }
     }
 }

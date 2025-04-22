@@ -8,60 +8,61 @@ using Xunit;
 namespace DSx.Caching.Abstractions.UnitTests.Interfaces
 {
     /// <summary>
-    /// Test per ICacheFactory
+    /// Test per verificare il comportamento dell'interfaccia ICacheFactory.
     /// </summary>
     public class CacheFactoryTests
     {
         private readonly Mock<ICacheFactory> _mockFactory = new();
 
         /// <summary>
-        /// Verifica la creazione di un provider valido
+        /// Verifica che CreateProvider sollevi ArgumentNullException per nome null.
         /// </summary>
         [Fact]
-        public void CreateProvider_DovrebbeRestituireProvider_ConNomeValido()
+        public void CreateProvider_DovrebbeSollevareArgumentNullException_PerNomeNull()
         {
             // Arrange
-            var expectedProvider = new Mock<ICacheProvider>().Object;
-            _mockFactory.Setup(x => x.CreateProvider("valid"))
-                .Returns(expectedProvider);
-
-            // Act
-            var provider = _mockFactory.Object.CreateProvider("valid");
-
-            // Assert
-            provider.Should().BeSameAs(expectedProvider);
-        }
-
-        /// <summary>
-        /// Verifica l'eccezione per provider non trovato
-        /// </summary>
-        [Fact]
-        public void CreateProvider_DovrebbeSollevareEccezione_ConNomeNonValido()
-        {
-            // Arrange
-            _mockFactory.Setup(x => x.CreateProvider("invalid"))
-                .Throws(new ArgumentException("Provider non valido"));
+            _mockFactory.Setup(x => x.CreateProvider(It.IsAny<string>()))
+                .Throws<ArgumentNullException>();
 
             // Act & Assert
-            Assert.Throws<ArgumentException>(() =>
-                _mockFactory.Object.CreateProvider("invalid"));
+            Assert.Throws<ArgumentNullException>(() =>
+                _mockFactory.Object.CreateProvider(null!));
         }
 
         /// <summary>
-        /// Verifica l'elenco dei provider disponibili
+        /// Verifica che GetProviderNames restituisca una lista non vuota.
         /// </summary>
         [Fact]
-        public void GetProviderNames_DovrebbeRestituireListaConfigurata()
+        public void GetProviderNames_DovrebbeRestituireListaNonVuota()
         {
             // Arrange
-            var expected = new List<string> { "redis", "memory" };
-            _mockFactory.Setup(x => x.GetProviderNames()).Returns(expected);
+            var expectedProviders = new List<string> { "Redis", "Memory" };
+            _mockFactory.Setup(x => x.GetProviderNames())
+                .Returns(expectedProviders);
 
             // Act
             var providers = _mockFactory.Object.GetProviderNames();
 
             // Assert
-            providers.Should().Equal(expected);
+            providers.Should()
+                .NotBeNullOrEmpty()
+                .And
+                .Equal(expectedProviders);
+        }
+
+        /// <summary>
+        /// Verifica che CreateProvider sollevi ArgumentException per nome vuoto.
+        /// </summary>
+        [Fact]
+        public void CreateProvider_DovrebbeSollevareArgumentException_PerNomeVuoto()
+        {
+            // Arrange
+            _mockFactory.Setup(x => x.CreateProvider(It.IsAny<string>()))
+                .Throws<ArgumentException>();
+
+            // Act & Assert
+            Assert.Throws<ArgumentException>(() =>
+                _mockFactory.Object.CreateProvider(string.Empty));
         }
     }
 }
