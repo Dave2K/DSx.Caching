@@ -9,3 +9,6 @@
 # Ignora cartelle del WorkSpace
 _artifacts/
 _temp/
+
+# Pacchetti NuGet locali
+.nuget/
