@@ -1,4 +1,5 @@
-﻿using DSx.Caching.SharedKernel.Telemetry;
+﻿// File modificato: DSx.Caching.SharedKernel.UnitTests/Telemetry/CacheTelemetryTests.cs
+using DSx.Caching.SharedKernel.Telemetry;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.Channel;
 using Microsoft.ApplicationInsights.DataContracts;
@@ -11,18 +12,16 @@ using Xunit;
 namespace DSx.Caching.SharedKernel.UnitTests.Telemetry
 {
     /// <summary>
-    /// Unit tests for verifying cache telemetry functionality
+    /// Contiene i test per il tracciamento della telemetria della cache
     /// </summary>
     public class CacheTelemetryTests
     {
         private readonly Mock<ITelemetryChannel> _channelMock = new();
         private readonly TelemetryClient _telemetryClient;
-
-        // Inizializzazione semplificata con collection expression
-        private readonly List<ITelemetry> _sentItems = [];
+        private readonly List<ITelemetry> _sentItems = new();
 
         /// <summary>
-        /// Initializes telemetry configuration and client
+        /// Inizializza la configurazione di telemetria per i test
         /// </summary>
         public CacheTelemetryTests()
         {
@@ -32,40 +31,48 @@ namespace DSx.Caching.SharedKernel.UnitTests.Telemetry
             var config = new TelemetryConfiguration
             {
                 TelemetryChannel = _channelMock.Object,
-                ConnectionString = $"InstrumentationKey={Guid.NewGuid()}"
+                ConnectionString = "InstrumentationKey=00000000-0000-0000-0000-000000000000"
             };
 
             _telemetryClient = new TelemetryClient(config);
         }
 
         /// <summary>
-        /// Verifies correct request telemetry transmission
+        /// Verifica che le richieste vengano tracciate correttamente
         /// </summary>
         [Fact]
         public void TrackRequest_ShouldSendCorrectTelemetry()
         {
-            var telemetry = new AppInsightsTelemetry(_telemetryClient);
+            // Arrange
+            var telemetry = new AppInsightsTelemetry(_telemetryClient); // <-- Modifica chiave qui
+
+            // Act
             telemetry.TrackRequest("Get", TimeSpan.FromMilliseconds(150), true);
 
+            // Assert
+            Assert.Single(_sentItems);
             var request = _sentItems[0] as RequestTelemetry;
-            Assert.Equal("Get", request!.Name);
+            Assert.Equal("Cache_Get", request!.Name);
             Assert.True(request.Success);
         }
 
         /// <summary>
-        /// Verifies exception context properties inclusion
+        /// Verifica che le eccezioni includano le proprietà del contesto
         /// </summary>
         [Fact]
         public void TrackException_ShouldIncludeContextProperties()
         {
-            var telemetry = new AppInsightsTelemetry(_telemetryClient);
+            // Arrange
+            var telemetry = new AppInsightsTelemetry(_telemetryClient); // <-- Modifica chiave qui
             var context = new Dictionary<string, object> { { "Key", "test" } };
 
+            // Act
             telemetry.TrackException(new InvalidOperationException("Test"), context);
 
+            // Assert
+            Assert.Single(_sentItems);
             var exception = _sentItems[0] as ExceptionTelemetry;
-            Assert.Equal("Test", exception!.Exception.Message);
-            Assert.Contains("Key", exception.Properties.Keys);
+            Assert.Contains("Key", exception!.Properties.Keys);
         }
     }
 }

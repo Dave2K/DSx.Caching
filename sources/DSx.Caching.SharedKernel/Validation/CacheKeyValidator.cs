@@ -1,33 +1,51 @@
-﻿using System.Text.RegularExpressions;
+﻿using DSx.Caching.SharedKernel.Validation;
+using System.Text.RegularExpressions;
 
 namespace DSx.Caching.SharedKernel.Validation
 {
     /// <summary>
-    /// Servizio per la validazione delle chiavi di cache
+    /// Valida e normalizza le chiavi della cache
     /// </summary>
-    public partial class CacheKeyValidator : ICacheKeyValidator
+    public class CacheKeyValidator : ICacheKeyValidator
     {
-        [GeneratedRegex(@"^[\w\-]{1,128}$", RegexOptions.Compiled)]
-        private static partial Regex KeyRegex();
+        private readonly Regex _validationRegex;
+        private readonly Regex _normalizationRegex;
 
-        /// <inheritdoc/>
-        public void Validate(string key)
+        /// <summary>
+        /// Inizializza un nuovo validatore con regex personalizzate
+        /// </summary>
+        /// <param name="validationPattern">Pattern per la validazione</param>
+        /// <param name="normalizationPattern">Pattern per la normalizzazione</param>
+        public CacheKeyValidator(
+            string validationPattern = @"^[\w\-]{1,128}$",
+            string normalizationPattern = @"[^\w\-]")
         {
-            if (string.IsNullOrWhiteSpace(key))
-                throw new ArgumentException("La chiave non può essere vuota");
-
-            if (!KeyRegex().IsMatch(key))
-                throw new ArgumentException($"Formato chiave non valido: {key}");
+            _validationRegex = new Regex(validationPattern, RegexOptions.Compiled);
+            _normalizationRegex = new Regex(normalizationPattern, RegexOptions.Compiled);
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// Verifica la validità di una chiave
+        /// </summary>
+        /// <param name="key">Chiave da validare</param>
+        /// <exception cref="ArgumentException">Chiave non valida</exception>
+        public void Validate(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key) || !_validationRegex.IsMatch(key))
+            {
+                throw new ArgumentException($"Chiave non valida: {key}");
+            }
+        }
+
+        /// <summary>
+        /// Normalizza una chiave secondo le regole definite
+        /// </summary>
+        /// <param name="rawKey">Chiave originale</param>
+        /// <returns>Chiave normalizzata</returns>
         public string NormalizeKey(string rawKey)
         {
-            if (string.IsNullOrWhiteSpace(rawKey))
-                return string.Empty;
-
-            var cleaned = rawKey.Trim().ToLowerInvariant();
-            return Regex.Replace(cleaned, @"[^\w\-]", "-");
+            var cleaned = _normalizationRegex.Replace(rawKey.Trim(), "-");
+            return cleaned.Length > 128 ? cleaned[..128] : cleaned.ToLowerInvariant();
         }
     }
 }

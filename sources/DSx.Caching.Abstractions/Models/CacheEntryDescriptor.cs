@@ -3,47 +3,37 @@
 namespace DSx.Caching.Abstractions.Models
 {
     /// <summary>
-    /// Rappresenta i metadati e le informazioni di stato per una voce nella cache
+    /// Rappresenta i metadati di una voce nella cache
     /// </summary>
-    /// <remarks>
-    /// Contiene informazioni dettagliate sullo stato della cache e metriche di utilizzo
-    /// </remarks>
     public class CacheEntryDescriptor
     {
         /// <summary>
-        /// Data e ora dell'ultimo accesso in lettura alla voce
+        /// Data e ora dell'ultimo accesso alla voce
         /// </summary>
-        /// <value>DateTime in formato UTC</value>
         public DateTime LastAccessed { get; internal set; }
 
         /// <summary>
-        /// Numero totale di accessi in lettura alla voce
+        /// Numero totale di letture effettuate
         /// </summary>
-        /// <value>Contatore intero non negativo</value>
         public int ReadCount { get; internal set; }
 
         /// <summary>
-        /// Dimensione approssimativa della voce in memoria
+        /// Dimensione occupata in memoria (in byte)
         /// </summary>
-        /// <value>Dimensione in bytes</value>
-        /// <remarks>
-        /// Il calcolo può variare in base al provider di cache
-        /// </remarks>
         public long SizeInBytes { get; internal set; }
 
         /// <summary>
-        /// Indica se la voce è stata modificata dopo l'inserimento iniziale
+        /// Indica se la voce ha modifiche non salvate
         /// </summary>
-        /// <value>True se modificata, altrimenti False</value>
         public bool IsDirty { get; internal set; }
 
         /// <summary>
-        /// Inizializza una nuova istanza della classe <see cref="CacheEntryDescriptor"/>
+        /// Inizializza una nuova istanza della classe CacheEntryDescriptor
         /// </summary>
         /// <param name="lastAccessed">Data ultimo accesso</param>
         /// <param name="readCount">Contatore letture</param>
-        /// <param name="sizeInBytes">Dimensione in bytes</param>
-        /// <param name="isDirty">Stato modifica</param>
+        /// <param name="sizeInBytes">Dimensione in byte</param>
+        /// <param name="isDirty">Stato modifiche</param>
         public CacheEntryDescriptor(
             DateTime lastAccessed,
             int readCount,
@@ -57,11 +47,8 @@ namespace DSx.Caching.Abstractions.Models
         }
 
         /// <summary>
-        /// Aggiorna i metadati dopo un'operazione di lettura
+        /// Aggiorna i metadati dopo una lettura
         /// </summary>
-        /// <exception cref="InvalidOperationException">
-        /// Sollevata se si tenta un aggiornamento non valido
-        /// </exception>
         public void UpdateOnRead()
         {
             ReadCount++;
@@ -69,9 +56,9 @@ namespace DSx.Caching.Abstractions.Models
         }
 
         /// <summary>
-        /// Aggiorna i metadati dopo un'operazione di scrittura
+        /// Aggiorna i metadati dopo una scrittura
         /// </summary>
-        /// <param name="newSize">Nuova dimensione in bytes</param>
+        /// <param name="newSize">Nuova dimensione in byte</param>
         public void UpdateOnWrite(long newSize)
         {
             SizeInBytes = newSize;
@@ -80,7 +67,7 @@ namespace DSx.Caching.Abstractions.Models
         }
 
         /// <summary>
-        /// Resetta lo stato di modifica della voce
+        /// Contrassegna la voce come pulita
         /// </summary>
         public void MarkAsClean()
         {

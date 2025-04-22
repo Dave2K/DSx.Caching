@@ -1,33 +1,40 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
-    /// Gestisce la coordinazione distribuita per operazioni su cache
+    /// Definisce un coordinatore per lock distribuiti e health check.
     /// </summary>
     public interface IDistributedCacheCoordinator
     {
         /// <summary>
-        /// Acquisisce un lock distribuito
+        /// Acquisisce un lock distribuito.
         /// </summary>
-        /// <param name="key">Chiave su cui acquisire il lock</param>
-        /// <param name="timeout">Timeout di attesa</param>
-        /// <returns>Disposable per rilasciare il lock</returns>
-        Task<IDisposable> AcquireLockAsync(string key, TimeSpan timeout);
+        /// <param name="key">Chiave del lock.</param>
+        /// <param name="timeout">Timeout di attesa.</param>
+        /// <param name="cancellationToken">Token per annullare l'operazione.</param>
+        Task<IDisposable> AcquireLockAsync(
+            string key,
+            TimeSpan timeout,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Invalida una chiave su tutti i nodi
+        /// Invalida una chiave su tutti i nodi.
         /// </summary>
-        /// <param name="key">Chiave da invalidare</param>
-        /// <returns>Task asincrono</returns>
-        Task InvalidateAcrossNodesAsync(string key);
+        /// <param name="key">Chiave da invalidare.</param>
+        /// <param name="cancellationToken">Token per annullare l'operazione.</param>
+        Task InvalidateAcrossNodesAsync(
+            string key,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Verifica lo stato di salute del coordinatore
+        /// Verifica lo stato del servizio.
         /// </summary>
-        /// <returns>Stato di salute corrente</returns>
-        Task<HealthStatus> CheckHealthAsync();
+        /// <param name="cancellationToken">Token per annullare l'operazione.</param>
+        Task<HealthStatus> CheckHealthAsync(
+            CancellationToken cancellationToken = default);
     }
 }

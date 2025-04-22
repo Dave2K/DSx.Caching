@@ -1,33 +1,38 @@
-﻿using DSx.Caching.Abstractions.Interfaces;
-using DSx.Caching.Providers.Memory;
-using DSx.Caching.SharedKernel.Validation;
-using Microsoft.Extensions.Caching.Memory;
+﻿using DSx.Caching.Abstractions.Clustering;
+using DSx.Caching.Abstractions.Interfaces;
+using DSx.Caching.Providers.Redis;
+using DSx.Caching.Providers.Redis.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
+using StackExchange.Redis;
 
-namespace DSx.Caching.Extensions
+namespace DSx.Caching.DependencyInjection
 {
     /// <summary>
-    /// Estensioni per la configurazione del core del caching
+    /// Metodi di estensione per la registrazione dei servizi Redis
     /// </summary>
     public static class ServiceCollectionExtensions
     {
         /// <summary>
-        /// Aggiunge i servizi core del caching
+        /// Aggiunge il provider Redis al sistema di dependency injection
         /// </summary>
-        public static IServiceCollection AddCachingCore(this IServiceCollection services)
-        {
-            services.AddSingleton<ICacheKeyValidator, CacheKeyValidator>();
-            return services;
-        }
-
-        /// <summary>
-        /// Aggiunge il provider MemoryCache
-        /// </summary>
-        public static IServiceCollection AddMemoryCacheProvider(this IServiceCollection services)
+        /// <param name="services">Collezione di servizi</param>
+        /// <param name="configurationString">Stringa di configurazione Redis</param>
+        /// <returns>Collezione di servizi aggiornata</returns>
+        public static IServiceCollection AddRedisCacheProvider(
+            this IServiceCollection services,
+            string configurationString)
         {
             return services
-                .AddSingleton<IMemoryCache, MemoryCache>()
-                .AddSingleton<ICacheProvider, MemoryCacheProvider>();
+                .AddSingleton<IConnectionMultiplexer>(_ =>
+                    ConnectionMultiplexer.Connect(configurationString))
+                .AddSingleton<ICacheClusterClient, RedisCacheClusterClient>()
+                .AddSingleton<ICacheProvider, RedisCacheProvider>()
+                .AddHealthChecks()
+                .AddCheck<RedisCacheHealthCheck>(
+                    name: "RedisCacheHealthCheck",
+                    failureStatus: Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Unhealthy
+                )
+                .Services;
         }
     }
 }

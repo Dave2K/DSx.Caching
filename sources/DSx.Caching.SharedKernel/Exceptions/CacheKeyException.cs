@@ -1,29 +1,45 @@
-﻿using DSx.Caching.SharedKernel.Enums;
+﻿// SOSTITUIRE TUTTO il contenuto del file
+using DSx.Caching.Abstractions.Exceptions;
+using DSx.Caching.SharedKernel.Enums;
+using System;
 
 namespace DSx.Caching.SharedKernel.Exceptions
 {
     /// <summary>
-    /// Eccezione sollevata per errori di validazione delle chiavi di cache
+    /// Eccezione specializzata per errori nelle chiavi di cache
     /// </summary>
-    /// <param name="message">Messaggio descrittivo</param>
-    /// <param name="codiceErrore">Codice univoco errore (es. KEY_001)</param>
-    /// <param name="livelloLog">Livello di gravità</param>
-    /// <param name="innerException">Eccezione originale</param>
     [Serializable]
-    public class CacheKeyException(
-        string message,
-        string codiceErrore,
-        LivelloLog livelloLog,
-        Exception innerException) : CacheException(message, innerException)
+    public class CacheKeyException : CacheException
     {
         /// <summary>
-        /// Codice identificativo univoco dell'errore
+        /// Codice identificativo dell'errore
         /// </summary>
-        public string CodiceErrore { get; } = codiceErrore;
+        public string CodiceErrore { get; }
 
         /// <summary>
-        /// Livello di log raccomandato per questo tipo di errore
+        /// Livello di gravità per il logging
         /// </summary>
-        public LivelloLog LivelloLog { get; } = livelloLog;
+        public LivelloLog LivelloLog { get; }
+
+        /// <summary>
+        /// Costruttore completo per l'eccezione
+        /// </summary>
+        /// <param name="message">Messaggio descrittivo dell'errore</param>
+        /// <param name="codiceErrore">Codice univoco dell'errore</param>
+        /// <param name="livelloLog">Livello di logging appropriato</param>
+        /// <param name="innerException">Eccezione originale</param>
+        public CacheKeyException(
+            string message,
+            string codiceErrore,
+            LivelloLog livelloLog,
+            Exception innerException)
+            : base(
+                message: message,
+                errorCode: codiceErrore,
+                innerException: innerException)
+        {
+            CodiceErrore = codiceErrore;
+            LivelloLog = livelloLog;
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DSx.Caching.Abstractions.Models;
+﻿// File: DSx.Caching.Providers.Memory.UnitTests/MemoryCacheProviderTests.cs
+using DSx.Caching.Abstractions.Models;
 using DSx.Caching.SharedKernel.Validation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -11,13 +12,12 @@ using Xunit;
 namespace DSx.Caching.Providers.Memory.UnitTests
 {
     /// <summary>
-    /// Test unitari per la classe <see cref="MemoryCacheProvider"/>
+    /// Contiene i test per il provider di cache in memoria
     /// </summary>
     public class MemoryCacheProviderTests
     {
         /// <summary>
-        /// Verifica che le operazioni vengano correttamente annullate
-        /// quando richiesto dal cancellation token
+        /// Verifica che le operazioni vengano annullate correttamente
         /// </summary>
         [Fact]
         public async Task Operations_ShouldCancel_WhenTokenRequested()
@@ -25,9 +25,10 @@ namespace DSx.Caching.Providers.Memory.UnitTests
             // Arrange
             var cache = new MemoryCache(new MemoryCacheOptions());
             var loggerMock = new Mock<ILogger<MemoryCacheProvider>>();
-            var keyValidator = new Mock<ICacheKeyValidator>().Object;
+            var keyValidator = new Mock<ICacheKeyValidator>();
+            keyValidator.Setup(v => v.Validate(It.IsAny<string>())).Verifiable();
 
-            var provider = new MemoryCacheProvider(cache, loggerMock.Object, keyValidator);
+            var provider = new MemoryCacheProvider(cache, loggerMock.Object, keyValidator.Object);
             var cts = new CancellationTokenSource();
             cts.Cancel();
 
@@ -36,36 +37,28 @@ namespace DSx.Caching.Providers.Memory.UnitTests
 
             // Assert
             Assert.Equal(CacheOperationStatus.OperationCancelled, result.Status);
-
-            // Verifica corretta usando il metodo Log effettivo
-            loggerMock.Verify(x => x.Log(
-                LogLevel.Error,
-                It.IsAny<EventId>(),
-                It.Is<It.IsAnyType>((v, _) => v.ToString()!.Contains("Errore durante il salvataggio chiave")),
-                It.IsAny<Exception>(),
-                It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
-                Times.Never);
+            keyValidator.Verify(v => v.Validate("key"), Times.Never);
         }
 
         /// <summary>
-        /// Verifica il corretto salvataggio di una chiave valida
+        /// Verifica il salvataggio corretto delle chiavi valide
         /// </summary>
         [Fact]
         public async Task SetAsync_ShouldHandleValidKeys()
         {
-            // Arrange
+            // Configura
             var cache = new MemoryCache(new MemoryCacheOptions());
             var loggerMock = new Mock<ILogger<MemoryCacheProvider>>();
             var keyValidator = new CacheKeyValidator();
 
             var provider = new MemoryCacheProvider(cache, loggerMock.Object, keyValidator);
 
-            // Act
+            // Esegui
             var result = await provider.SetAsync("valid_key", "value");
 
-            // Assert
+            // Verifica
             Assert.Equal(CacheOperationStatus.Success, result.Status);
-            Assert.True(cache.TryGetValue("valid_key", out string? _));
+            Assert.True(cache.TryGetValue("valid_key", out _));
         }
     }
 }

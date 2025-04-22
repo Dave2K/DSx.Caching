@@ -1,5 +1,5 @@
 ﻿using DSx.Caching.Abstractions.Models;
-using DSx.Caching.SharedKernel.Policies;
+using DSx.Caching.Abstractions.Policies;
 using Xunit;
 
 namespace DSx.Caching.SharedKernel.UnitTests.Policies

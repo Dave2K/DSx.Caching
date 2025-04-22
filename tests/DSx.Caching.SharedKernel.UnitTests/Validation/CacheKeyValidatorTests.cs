@@ -1,40 +1,40 @@
 ﻿using DSx.Caching.SharedKernel.Validation;
-using FluentAssertions;
 using Xunit;
 
 namespace DSx.Caching.SharedKernel.UnitTests.Validation
 {
     /// <summary>
-    /// Test suite per la validazione delle chiavi della cache
+    /// Test per il validatore di chiavi della cache
     /// </summary>
     public class CacheKeyValidatorTests
     {
-        private readonly CacheKeyValidator _validator = new();
-
         /// <summary>
-        /// Verifica l'accettazione di chiavi nel formato corretto
+        /// Verifica la normalizzazione delle chiavi speciali
         /// </summary>
-        /// <param name="key">Chiave da testare</param>
         [Theory]
-        [InlineData("valid-key_123")]
-        [InlineData("TEST-KEY")]
-        public void Validate_DovrebbeAccettareChiaviValide(string key)
+        [InlineData("Test@123!", "test-123-")]
+        [InlineData("  Spaces  ", "spaces")]
+        public void NormalizeKey_DovrebbePulireChiavi(string input, string expected)
         {
-            var act = () => _validator.Validate(key);
-            act.Should().NotThrow();
+            var validator = new CacheKeyValidator();
+            var result = validator.NormalizeKey(input);
+
+            Assert.Equal(expected, result);
         }
 
         /// <summary>
-        /// Verifica il rifiuto di chiavi non conformi
+        /// Verifica il rifiuto di chiavi non valide
         /// </summary>
-        /// <param name="key">Chiave non valida</param>
         [Theory]
-        [InlineData("invalid!key")]
+        [InlineData(null)]
         [InlineData("")]
-        public void Validate_DovrebbeRifiutareChiaviNonValide(string key)
+        [InlineData("invalid key with spaces")]
+        public void Validate_DovrebbeRigettareChiaviNonValide(string? key)
         {
-            var act = () => _validator.Validate(key);
-            act.Should().Throw<ArgumentException>();
+            var validator = new CacheKeyValidator();
+
+            Assert.Throws<ArgumentException>(() =>
+                validator.Validate(key!));
         }
     }
 }

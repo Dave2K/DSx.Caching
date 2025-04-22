@@ -1,45 +1,47 @@
-﻿using DSx.Caching.Abstractions.Interfaces;
+﻿// SOSTITUIRE TUTTO il contenuto del file
+using DSx.Caching.Abstractions.Interfaces;
 using FluentAssertions;
 using Moq;
+using System.Threading;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace DSx.Caching.Abstractions.UnitTests.Interfaces
 {
     /// <summary>
-    /// Test per <see cref="ICacheService"/>
+    /// Test per il servizio di cache
     /// </summary>
     public class CacheServiceTests
     {
         private readonly Mock<ICacheService> _mockService = new();
 
         /// <summary>
-        /// Verifica che RemoveAsync completi l'operazione
+        /// Verifica la rimozione asincrona completata
         /// </summary>
         [Fact]
         public async Task RemoveAsync_CompletesSuccessfully()
         {
-            // Arrange
             _mockService
-                .Setup(x => x.RemoveAsync("key"))
+                .Setup(x => x.RemoveAsync("key", It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
-            // Act & Assert (no exceptions)
             await _mockService.Object.RemoveAsync("key");
         }
 
         /// <summary>
-        /// Verifica che SetAsync gestisca valori null
+        /// Verifica la gestione di valori nulli nell'inserimento
         /// </summary>
         [Fact]
         public async Task SetAsync_HandlesNullValues()
         {
-            // Arrange
             _mockService
-                .Setup(x => x.SetAsync<string?>("key", null)) // Aggiungi '?' a string
+                .Setup(x => x.SetAsync<string>(
+                    "key",
+                    It.IsAny<string>(),
+                    It.IsAny<CancellationToken>()))
                 .Returns(Task.CompletedTask);
 
-            // Act & Assert (no exceptions)
-            await _mockService.Object.SetAsync("key", (string?)null); // Aggiungi '?' al cast
+            await _mockService.Object.SetAsync("key", (string?)null);
         }
     }
 }

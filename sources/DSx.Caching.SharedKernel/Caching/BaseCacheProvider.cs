@@ -1,4 +1,6 @@
-﻿using DSx.Caching.Abstractions.Models;
+﻿using DSx.Caching.Abstractions.Events;
+using DSx.Caching.Abstractions.Interfaces;
+using DSx.Caching.Abstractions.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -7,21 +9,36 @@ using System.Threading.Tasks;
 namespace DSx.Caching.SharedKernel.Caching
 {
     /// <summary>
-    /// Fornisce un'implementazione base per i provider di cache con funzionalità comuni
+    /// Fornisce un'implementazione base astratta per i provider di cache
     /// </summary>
-    public abstract class BaseCacheProvider : IDisposable, IAsyncDisposable
+    public abstract class BaseCacheProvider : ICacheProvider, IDisposable, IAsyncDisposable
     {
-        private bool _disposed;
-
         /// <summary>
-        /// Istanza del logger per la registrazione delle operazioni
+        /// Logger per la registrazione delle attività
         /// </summary>
         protected readonly ILogger Logger;
 
+        private bool _disposed;
+
         /// <summary>
-        /// Inizializza una nuova istanza della classe BaseCacheProvider
+        /// Evento sollevato prima dell'esecuzione di qualsiasi operazione sulla cache
         /// </summary>
-        /// <param name="logger">Istanza del logger da utilizzare</param>
+        public abstract event EventHandler<CacheEventArgs>? BeforeOperation;
+
+        /// <summary>
+        /// Evento sollevato dopo il completamento di qualsiasi operazione sulla cache
+        /// </summary>
+        public abstract event EventHandler<CacheEventArgs>? AfterOperation;
+
+        /// <summary>
+        /// Evento sollevato quando un'operazione viene posticipata per motivi specifici
+        /// </summary>
+        public abstract event EventHandler<OperationDeferredEventArgs>? OperationDeferred;
+
+        /// <summary>
+        /// Inizializza una nuova istanza della classe base per i provider di cache
+        /// </summary>
+        /// <param name="logger">Istanza del logger per la registrazione delle attività</param>
         /// <exception cref="ArgumentNullException">Generato quando il logger è null</exception>
         protected BaseCacheProvider(ILogger logger)
         {
@@ -29,27 +46,75 @@ namespace DSx.Caching.SharedKernel.Caching
         }
 
         /// <summary>
-        /// Rilascia tutte le risorse utilizzate dal provider
+        /// Verifica l'esistenza di una chiave nella cache
         /// </summary>
-        public virtual void Dispose()
-        {
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
-        }
+        /// <param name="key">Chiave da verificare</param>
+        /// <param name="cancellationToken">Token per annullamento operativo</param>
+        /// <returns>Risultato dell'operazione con stato e dettagli</returns>
+        public abstract Task<CacheOperationResult> ExistsAsync(
+            string key,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Rilascia tutte le risorse in modo asincrono
+        /// Recupera un valore dalla cache utilizzando la chiave specificata
         /// </summary>
-        public virtual async ValueTask DisposeAsync()
-        {
-            await DisposeAsyncCore().ConfigureAwait(false);
-            Dispose(disposing: false);
-            GC.SuppressFinalize(this);
-        }
+        /// <typeparam name="T">Tipo del valore da recuperare</typeparam>
+        /// <param name="key">Chiave identificativa del valore</param>
+        /// <param name="options">Opzioni aggiuntive per l'operazione</param>
+        /// <param name="cancellationToken">Token per annullamento operativo</param>
+        /// <returns>Risultato contenente il valore recuperato o errori</returns>
+        public abstract Task<CacheOperationResult<T>> GetAsync<T>(
+            string key,
+            CacheEntryOptions? options = null,
+            CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Verifica se l'istanza è stata disposed
+        /// Ottiene i metadati tecnici di una voce della cache
         /// </summary>
+        /// <param name="key">Chiave identificativa della voce</param>
+        /// <param name="cancellationToken">Token per annullamento operativo</param>
+        /// <returns>Descrittore tecnico della voce o null se non presente</returns>
+        public abstract Task<CacheEntryDescriptor?> GetDescriptorAsync(
+            string key,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Memorizza un valore nella cache associandolo a una chiave
+        /// </summary>
+        /// <typeparam name="T">Tipo generico del valore da memorizzare</typeparam>
+        /// <param name="key">Chiave univoca per l'identificazione</param>
+        /// <param name="value">Valore da memorizzare nella cache</param>
+        /// <param name="options">Opzioni di configurazione per la memorizzazione</param>
+        /// <param name="cancellationToken">Token per annullamento operativo</param>
+        /// <returns>Risultato dell'operazione di memorizzazione</returns>
+        public abstract Task<CacheOperationResult> SetAsync<T>(
+            string key,
+            T value,
+            CacheEntryOptions? options = null,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Rimuove una voce specifica dalla cache
+        /// </summary>
+        /// <param name="key">Chiave della voce da rimuovere</param>
+        /// <param name="cancellationToken">Token per annullamento operativo</param>
+        /// <returns>Risultato dell'operazione di rimozione</returns>
+        public abstract Task<CacheOperationResult> RemoveAsync(
+            string key,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Svuota completamente il contenuto della cache
+        /// </summary>
+        /// <param name="cancellationToken">Token per annullamento operativo</param>
+        /// <returns>Risultato dell'operazione di svuotamento</returns>
+        public abstract Task<CacheOperationResult> ClearAllAsync(
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Verifica lo stato di disposizione dell'oggetto
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">Generato se l'oggetto è già stato eliminato</exception>
         protected void CheckDisposed()
         {
             if (_disposed)
@@ -59,87 +124,38 @@ namespace DSx.Caching.SharedKernel.Caching
         }
 
         /// <summary>
-        /// Pulizia delle risorse
+        /// Esegue la disposizione delle risorse gestite
         /// </summary>
-        /// <param name="disposing">True se chiamato da Dispose()</param>
+        /// <param name="disposing">Indica se la disposizione è esplicita</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed)
             {
                 if (disposing)
                 {
-                    // Pulizia risorse gestite
+                    // Logica di pulizia per risorse gestite
                 }
                 _disposed = true;
             }
         }
 
         /// <summary>
-        /// Pulizia asincrona delle risorse
+        /// Implementazione dell'interfaccia IDisposable
         /// </summary>
-        protected virtual ValueTask DisposeAsyncCore() => ValueTask.CompletedTask;
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
-        /// Verifica l'esistenza di una chiave nella cache
+        /// Implementazione dell'interfaccia IAsyncDisposable
         /// </summary>
-        /// <param name="key">Chiave da verificare</param>
-        /// <param name="options">Opzioni della cache (opzionali)</param>
-        /// <param name="ct">Token di cancellazione</param>
-        /// <returns>Risultato dell'operazione</returns>
-        public abstract Task<CacheOperationResult> ExistsAsync(
-            string key,
-            CacheEntryOptions? options = null,
-            CancellationToken ct = default
-        );
-
-        /// <summary>
-        /// Recupera un valore dalla cache
-        /// </summary>
-        /// <typeparam name="T">Tipo del valore memorizzato</typeparam>
-        /// <param name="key">Chiave della cache</param>
-        /// <param name="options">Opzioni della cache (opzionali)</param>
-        /// <param name="ct">Token di cancellazione</param>
-        /// <returns>Risultato contenente il valore o lo stato dell'operazione</returns>
-        public abstract Task<CacheOperationResult<T>> GetAsync<T>(
-            string key,
-            CacheEntryOptions? options = null,
-            CancellationToken ct = default
-        );
-
-        /// <summary>
-        /// Memorizza un valore nella cache
-        /// </summary>
-        /// <typeparam name="T">Tipo del valore da memorizzare</typeparam>
-        /// <param name="key">Chiave della cache</param>
-        /// <param name="value">Valore da memorizzare</param>
-        /// <param name="options">Opzioni della cache (opzionali)</param>
-        /// <param name="ct">Token di cancellazione</param>
-        /// <returns>Risultato dell'operazione</returns>
-        public abstract Task<CacheOperationResult> SetAsync<T>(
-            string key,
-            T value,
-            CacheEntryOptions? options = null,
-            CancellationToken ct = default
-        );
-
-        /// <summary>
-        /// Rimuove un elemento dalla cache
-        /// </summary>
-        /// <param name="key">Chiave da rimuovere</param>
-        /// <param name="ct">Token di cancellazione</param>
-        /// <returns>Risultato dell'operazione</returns>
-        public abstract Task<CacheOperationResult> RemoveAsync(
-            string key,
-            CancellationToken ct = default
-        );
-
-        /// <summary>
-        /// Svuota completamente la cache
-        /// </summary>
-        /// <param name="ct">Token di cancellazione</param>
-        /// <returns>Risultato dell'operazione</returns>
-        public abstract Task<CacheOperationResult> ClearAllAsync(
-            CancellationToken ct = default
-        );
+        public virtual ValueTask DisposeAsync()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+            return ValueTask.CompletedTask;
+        }
     }
 }

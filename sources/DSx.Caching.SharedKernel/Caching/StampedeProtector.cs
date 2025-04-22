@@ -4,20 +4,19 @@ using System.Threading.Tasks;
 namespace DSx.Caching.SharedKernel.Caching
 {
     /// <summary>
-    /// Previene accessi concorrenti alla stessa risorsa tramite lock per chiave
+    /// Previene l'accesso concorrente a risorse critiche
     /// </summary>
     public sealed class StampedeProtector
     {
         private readonly ConcurrentDictionary<string, SemaphoreSlim> _keyLocks = new();
 
         /// <summary>
-        /// Numero di lock attualmente attivi (solo per testing)
+        /// Esegue un'operazione con lock distribuito
         /// </summary>
-        public int ActiveLocksCount => _keyLocks.Count;
-
-        /// <summary>
-        /// Esegue un'operazione con lock distribuito per chiave
-        /// </summary>
+        /// <typeparam name="T">Tipo del risultato</typeparam>
+        /// <param name="key">Chiave su cui applicare il lock</param>
+        /// <param name="valueFactory">Funzione da eseguire protetta</param>
+        /// <returns>Risultato dell'operazione</returns>
         public async Task<T> ExecuteWithLockAsync<T>(string key, Func<Task<T>> valueFactory)
         {
             var keyLock = _keyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
@@ -33,5 +32,10 @@ namespace DSx.Caching.SharedKernel.Caching
                 _keyLocks.TryRemove(key, out _);
             }
         }
+
+        /// <summary>
+        /// Numero di lock attualmente attivi
+        /// </summary>
+        public int ActiveLocksCount => _keyLocks.Count;
     }
 }
