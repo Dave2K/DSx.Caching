@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<PropertyGroup>	
+		<!-- METADATI COMUNI (NuGet/Solution) -->
+		<Version>1.0.0</Version>
+		<Authors>Davide Sangalli</Authors>
+		<Company>DSx Solution</Company>
+		<RepositoryUrl>https://github.com/Dave2K/DSx.Caching</RepositoryUrl>
+		<Copyright>Copyright © $([System.DateTime]::Now.Year) $(Company)</Copyright>
+
+		<!-- Definizione del percorso principale della Workspace -->
+		<WSPath>$(MSBuildThisFileDirectory)</WSPath>
+		
+		<!-- Percorsi per risorse e file temporanei -->
+		<WSBuildPath>$(WSPath)</WSBuildPath>
+		<WSArtifactsPath>$(WSPath)_artifacts\</WSArtifactsPath>
+		<WSTempPath>$(WSPath)_temp\</WSTempPath>
+		<WSResourcesPath>$(WSPath)resources\</WSResourcesPath>
+
+		<!-- Configurazioni di compilazione -->
+		<OutputPath>$(WSArtifactsPath)$(MSBuildProjectName)\$(Configuration)\</OutputPath>
+		<BaseIntermediateOutputPath>$(WSTempPath)$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+		<IntermediateOutputPath>$(BaseIntermediateOutputPath)obj\$(Configuration)\</IntermediateOutputPath>
+
+		<NuGetAudit>true</NuGetAudit>
+	    <NuGetAuditLevel>critical</NuGetAuditLevel>
+	</PropertyGroup>
+
+	<!-- Importa le reference dei progetti -->
+	<!-- <Import Project="$(WSBuildPath)Directory.Packages.props" /> -->
+
+	<PropertyGroup>
+		<!-- PACCHETTI -->
+		<!-- ABILITA GESTIONE CENTRALIZZATA DELLE VERSIONI -->
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<!-- Gestione centralizzata versioni NuGet -->
+		
+		<!-- RILEVAZIONE PROGETTI DI TEST -->
+		<IsTestProject Condition="$(MSBuildProjectDirectory.Contains('tests'))">true</IsTestProject>
+		<!-- Progetto di test se il percorso contiene "tests" -->
+	</PropertyGroup>
+
+	<!-- Importa i settaggi globali per i progetti -->
+	<Import Project="$(WSBuildPath)DotNetSettings.props" />
+
+	<!-- DIPENDENZE DI TEST (IMPORTATE SOLO SE NECESSARIO) -->
+	<Import Project="$(WSBuildPath)TestDependencies.props" Condition="'$(IsTestProject)' == 'true'"/>
+</Project>
