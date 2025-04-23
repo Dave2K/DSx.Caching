@@ -1,17 +1,23 @@
-﻿using DSx.Caching.Abstractions.Factories;
 using StackExchange.Redis;
+using DSx.Caching.SharedKernel.Interfaces;
 
 namespace DSx.Caching.Infrastructure.Factories
 {
     /// <summary>
-    /// Implementazione concreta della factory per connessioni Redis
+    /// Factory per la creazione di connessioni Redis ConnectionMultiplexer
     /// </summary>
-    public class RedisConnectionMultiplexerFactory : IConnectionMultiplexerFactory
+    public class RedisConnectionMultiplexerFactory : IConnectionFactory<IConnectionMultiplexer>
     {
-        /// <inheritdoc/>
-        public IConnectionMultiplexer CreateConnection(string configurationString)
+        /// <summary>
+        /// Crea una nuova connessione Redis utilizzando la stringa di configurazione
+        /// </summary>
+        /// <param name="configuration">Stringa di configurazione Redis</param>
+        /// <returns>Istanza di ConnectionMultiplexer</returns>
+        public IConnectionMultiplexer CreateConnection(object configuration)
         {
-            return ConnectionMultiplexer.Connect(configurationString);
+            return ConnectionMultiplexer.Connect(
+                ConfigurationOptions.Parse((string)configuration)
+            );
         }
     }
 }

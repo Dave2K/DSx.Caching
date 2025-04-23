@@ -276,10 +276,11 @@ namespace DSx.Caching.Providers.Memory
                     return null;
 
                 return new CacheEntryDescriptor(
-                    wrapper.LastAccessed,
-                    wrapper.ReadCount,
-                    wrapper.SizeInBytes,
-                    wrapper.IsDirty
+                    key: key,
+                    lastAccessed: wrapper.LastAccessed,
+                    readCount: wrapper.ReadCount,
+                    sizeInBytes: wrapper.SizeInBytes,
+                    isDirty: wrapper.IsDirty
                 );
             }
             catch (Exception ex)

@@ -1,4 +1,4 @@
-﻿using DSx.Caching.Abstractions.Events;
+using DSx.Caching.Abstractions.Events;
 using DSx.Caching.Abstractions.Models;
 using DSx.Caching.SharedKernel.Caching;
 using DSx.Caching.SharedKernel.Validation;
@@ -178,6 +178,7 @@ namespace DSx.Caching.Providers.Redis
                 if (!ttl.HasValue) return null;
 
                 return new CacheEntryDescriptor(
+                    key: key,
                     lastAccessed: DateTime.UtcNow - ttl.Value,
                     readCount: 0,
                     sizeInBytes: 0,

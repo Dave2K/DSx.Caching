@@ -1,0 +1,13 @@
+{
+    "version": "1.0.0",
+    "tasks": [
+      {
+        "taskName": "Formatta-Soluzione",
+        "appliesTo": "*",
+        "type": "launch",
+        "contextType": "solution",
+        "command": "dotnet",
+        "args": ["format", "--workspace", "${workspaceRoot}\\DSx.Caching.sln"]
+      }
+    ]
+  }

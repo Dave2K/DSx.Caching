@@ -1,4 +1,4 @@
-﻿using DSx.Caching.Abstractions.Clustering;
+using DSx.Caching.Abstractions.Clustering;
 using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Providers.Redis;
 using DSx.Caching.Providers.Redis.HealthChecks;

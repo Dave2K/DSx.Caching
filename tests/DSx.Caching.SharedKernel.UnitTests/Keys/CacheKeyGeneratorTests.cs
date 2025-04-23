@@ -1,4 +1,4 @@
-﻿using DSx.Caching.SharedKernel.Keys;
+using DSx.Caching.Abstractions.Keys;
 using FluentAssertions;
 using Xunit;
 

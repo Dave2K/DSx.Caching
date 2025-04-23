@@ -9,7 +9,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\DSx.Caching.Providers.Memory\DSx.Caching.Providers.Memory.csproj" />
+	  <ProjectReference Include="..\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
+	  <ProjectReference Include="..\DSx.Caching.Providers.Redis\DSx.Caching.Providers.Redis.csproj" />
+	  <ProjectReference Include="..\DSx.Caching.SharedKernel\DSx.Caching.SharedKernel.csproj" />
 	</ItemGroup>
 
 </Project>
