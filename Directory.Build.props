@@ -22,8 +22,8 @@
 		<BaseIntermediateOutputPath>$(WSTempPath)$(MSBuildProjectName)\</BaseIntermediateOutputPath>
 		<IntermediateOutputPath>$(BaseIntermediateOutputPath)obj\$(Configuration)\</IntermediateOutputPath>
 
-		<NuGetAudit>true</NuGetAudit>
-	    <NuGetAuditLevel>critical</NuGetAuditLevel>
+		<!-- <NuGetAudit>true</NuGetAudit>
+	    <NuGetAuditLevel>critical</NuGetAuditLevel> -->
 	</PropertyGroup>
 
 	<!-- Importa le reference dei progetti -->
