@@ -10,7 +10,7 @@
 
 			<!-- Percorsi con escape dei caratteri per evitare errori -->
 			<EscapedResourcesPath>$([System.String]::Copy('$(WSBuildPath)').Replace('\', '\\'))</EscapedResourcesPath>
-			<EscapedTempsPath>$([System.String]::Copy('$(WSTempsFolder)').Replace('\', '\\'))</EscapedTempsPath>
+			<EscapedTempsPath>$([System.String]::Copy('$(WSTempPath)').Replace('\', '\\'))</EscapedTempsPath>
 
 			<!-- Percorso del file generato -->
 			<WSEnvironmentFilePath>$(IntermediateOutputPath)WSEnvironment.g.cs</WSEnvironmentFilePath>

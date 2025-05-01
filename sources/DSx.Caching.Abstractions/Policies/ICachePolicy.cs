@@ -1,4 +1,4 @@
-﻿using DSx.Caching.Abstractions.Models;
+using DSx.Caching.Abstractions.Models;
 
 namespace DSx.Caching.Abstractions.Policies
 {

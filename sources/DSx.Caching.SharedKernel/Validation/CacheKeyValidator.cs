@@ -1,51 +1,79 @@
-﻿using DSx.Caching.SharedKernel.Validation;
+using DSx.Caching.SharedKernel.Interfaces;
 using System.Text.RegularExpressions;
 
 namespace DSx.Caching.SharedKernel.Validation
 {
     /// <summary>
-    /// Valida e normalizza le chiavi della cache
+    /// Fornisce servizi per la validazione e normalizzazione delle chiavi di cache
     /// </summary>
     public class CacheKeyValidator : ICacheKeyValidator
     {
-        private readonly Regex _validationRegex;
-        private readonly Regex _normalizationRegex;
+        private const int MaxKeyLength = 256;
+        private static readonly Regex InvalidCharactersRegex = new(
+            pattern: "[^a-z0-9_-]",
+            options: RegexOptions.Compiled
+        );
+        private static readonly Regex MultiSeparatorsRegex = new(
+            pattern: "[-_]{2,}",
+            options: RegexOptions.Compiled
+        );
 
         /// <summary>
-        /// Inizializza un nuovo validatore con regex personalizzate
+        /// Normalizza una chiave secondo le regole di formattazione
         /// </summary>
-        /// <param name="validationPattern">Pattern per la validazione</param>
-        /// <param name="normalizationPattern">Pattern per la normalizzazione</param>
-        public CacheKeyValidator(
-            string validationPattern = @"^[\w\-]{1,128}$",
-            string normalizationPattern = @"[^\w\-]")
+        /// <param name="key">Chiave da normalizzare</param>
+        /// <returns>Chiave normalizzata</returns>
+        /// <exception cref="ArgumentException">Se la chiave è vuota o contiene solo spazi</exception>
+        public string NormalizeKey(string key)
         {
-            _validationRegex = new Regex(validationPattern, RegexOptions.Compiled);
-            _normalizationRegex = new Regex(normalizationPattern, RegexOptions.Compiled);
+            if (string.IsNullOrWhiteSpace(key))
+                throw new ArgumentException("La chiave non può essere vuota", nameof(key));
+
+            // Passaggi di normalizzazione
+            var normalized = key
+                .ToLowerInvariant() // Converti in minuscolo
+                .Trim() // Rimuovi spazi all'inizio/fine
+                .Replace("_", "-"); // Sostituisci underscore con trattini
+
+            // Sostituisci caratteri non validi
+            normalized = InvalidCharactersRegex.Replace(normalized, "-");
+
+            // Unisci separatori multipli
+            normalized = MultiSeparatorsRegex.Replace(normalized, "-");
+
+            // Troncamento e pulizia finale
+            normalized = normalized.Trim('-');
+            if (normalized.Length > MaxKeyLength)
+                normalized = normalized.Substring(0, MaxKeyLength).Trim('-');
+
+            return normalized;
         }
 
         /// <summary>
-        /// Verifica la validità di una chiave
+        /// Valida una chiave contro le regole di formattazione
         /// </summary>
         /// <param name="key">Chiave da validare</param>
-        /// <exception cref="ArgumentException">Chiave non valida</exception>
+        /// <exception cref="InvalidCacheKeyException">Sollevata per chiavi non valide</exception>
         public void Validate(string key)
         {
-            if (string.IsNullOrWhiteSpace(key) || !_validationRegex.IsMatch(key))
-            {
-                throw new ArgumentException($"Chiave non valida: {key}");
-            }
-        }
+            if (string.IsNullOrWhiteSpace(key))
+                throw new InvalidCacheKeyException("Chiave vuota", "EMPTY_KEY", key);
 
-        /// <summary>
-        /// Normalizza una chiave secondo le regole definite
-        /// </summary>
-        /// <param name="rawKey">Chiave originale</param>
-        /// <returns>Chiave normalizzata</returns>
-        public string NormalizeKey(string rawKey)
-        {
-            var cleaned = _normalizationRegex.Replace(rawKey.Trim(), "-");
-            return cleaned.Length > 128 ? cleaned[..128] : cleaned.ToLowerInvariant();
+            var normalized = NormalizeKey(key);
+
+            if (normalized != key)
+                throw new InvalidCacheKeyException(
+                    "Formato chiave non valido",
+                    "INVALID_FORMAT",
+                    key
+                );
+
+            if (normalized.Length > MaxKeyLength)
+                throw new InvalidCacheKeyException(
+                    $"Lunghezza massima consentita: {MaxKeyLength} caratteri",
+                    "MAX_LENGTH_EXCEEDED",
+                    key
+                );
         }
     }
 }

@@ -1,39 +1,40 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace DSx.Caching.Abstractions.Events
 {
     /// <summary>
-    /// Pubblicatore centralizzato di eventi della cache.
+    /// Gestisce la pubblicazione degli eventi relativi alle operazioni sulla cache.
+    /// Fornisce notifiche prima e dopo ogni operazione, oltre a gestire eventi speciali.
     /// </summary>
     public class CacheEventPublisher
     {
         private readonly ILogger<CacheEventPublisher> _logger;
 
         /// <summary>
-        /// Evento generato prima di un'operazione sulla cache.
+        /// Evento sollevato prima dell'esecuzione di un'operazione sulla cache.
         /// </summary>
         public event EventHandler<CacheEventArgs>? BeforeOperation;
 
         /// <summary>
-        /// Evento generato dopo un'operazione sulla cache.
+        /// Evento sollevato dopo il completamento di un'operazione sulla cache.
         /// </summary>
         public event EventHandler<CacheEventArgs>? AfterOperation;
 
         /// <summary>
-        /// Inizializza una nuova istanza del pubblicatore di eventi.
+        /// Inizializza una nuova istanza della classe <see cref="CacheEventPublisher"/>.
         /// </summary>
-        /// <param name="logger">Logger per tracciamento eventi.</param>
+        /// <param name="logger">Logger per la registrazione degli eventi.</param>
         public CacheEventPublisher(ILogger<CacheEventPublisher> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// Notifica l'inizio di un'operazione.
+        /// Notifica l'inizio di un'operazione sulla cache.
         /// </summary>
-        /// <param name="key">Chiave dell'elemento.</param>
-        /// <param name="operationType">Tipo di operazione.</param>
+        /// <param name="key">Chiave dell'elemento coinvolto nell'operazione.</param>
+        /// <param name="operationType">Tipo di operazione eseguita.</param>
         public void NotifyBeforeOperation(string key, CacheOperationType operationType)
         {
             var args = new CacheEventArgs(key, operationType);
@@ -47,10 +48,10 @@ namespace DSx.Caching.Abstractions.Events
         }
 
         /// <summary>
-        /// Notifica il completamento di un'operazione.
+        /// Notifica il completamento di un'operazione sulla cache.
         /// </summary>
-        /// <param name="key">Chiave dell'elemento.</param>
-        /// <param name="operationType">Tipo di operazione.</param>
+        /// <param name="key">Chiave dell'elemento coinvolto nell'operazione.</param>
+        /// <param name="operationType">Tipo di operazione eseguita.</param>
         /// <param name="success">Esito dell'operazione.</param>
         public void NotifyAfterOperation(string key, CacheOperationType operationType, bool success)
         {
@@ -65,11 +66,11 @@ namespace DSx.Caching.Abstractions.Events
         }
 
         /// <summary>
-        /// Notifica un evento speciale della cache.
+        /// Registra un evento speciale con livello di gravità Error.
         /// </summary>
-        /// <param name="eventId">Tipo di evento speciale.</param>
-        /// <param name="message">Messaggio descrittivo.</param>
-        /// <param name="exception">Eccezione correlata (opzionale).</param>
+        /// <param name="eventId">Identificativo univoco dell'evento.</param>
+        /// <param name="message">Messaggio descrittivo dell'evento.</param>
+        /// <param name="exception">Eccezione correlata all'evento (opzionale).</param>
         public void NotifySpecialEvent(EventId eventId, string message, Exception? exception = null)
         {
             _logger.Log(

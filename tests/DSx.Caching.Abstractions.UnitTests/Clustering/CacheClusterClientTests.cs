@@ -1,4 +1,4 @@
-﻿using DSx.Caching.Abstractions.Clustering;
+using DSx.Caching.Abstractions.Interfaces;
 using FluentAssertions;
 using Moq;
 using System.Threading.Tasks;

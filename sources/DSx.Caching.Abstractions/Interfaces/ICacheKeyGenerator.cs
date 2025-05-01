@@ -1,4 +1,4 @@
-﻿namespace DSx.Caching.Abstractions.Keys
+namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
     /// Servizio per la generazione e normalizzazione di chiavi di cache.

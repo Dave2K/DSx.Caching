@@ -1,4 +1,4 @@
-﻿namespace DSx.Caching.SharedKernel.Serialization
+namespace DSx.Caching.SharedKernel.Interfaces
 {
     /// <summary>
     /// Servizio per la serializzazione/desserializzazione dei dati

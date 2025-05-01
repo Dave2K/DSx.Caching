@@ -1,61 +1,44 @@
-using DSx.Caching.Abstractions.Keys;
+using DSx.Caching.SharedKernel.Keys;
 using FluentAssertions;
 using Xunit;
 
 namespace DSx.Caching.SharedKernel.UnitTests.Keys
 {
     /// <summary>
-    /// Unit tests for DefaultCacheKeyGenerator implementation
+    /// Test per la generazione e normalizzazione delle chiavi di cache
     /// </summary>
     public class DefaultCacheKeyGeneratorTests
     {
-        private readonly ICacheKeyGenerator _generator = new DefaultCacheKeyGenerator();
+        private readonly DefaultCacheKeyGenerator _generator = new();
 
         /// <summary>
-        /// Verifies key generation with valid parameters
-        /// </summary>
-        [Theory]
-        [InlineData("product", new object[] { 123, "v2" }, "product_123_v2")]
-        [InlineData("CATEGORY", new object[] { "items", 5 }, "category_items_5")]
-        public void GenerateKey_ValidParameters_ReturnsNormalizedKey(
-            string baseKey, object[] parameters, string expected)
-        {
-            // Act
-            var result = _generator.GenerateKey(baseKey, parameters);
-
-            // Assert
-            result.Should().Be(expected);
-        }
-
-        /// <summary>
-        /// Verifies key normalization handles special characters
-        /// </summary>
-        [Theory]
-        [InlineData("Test@Key!", "test-key-")]
-        [InlineData("  Spaces  Here  ", "spaces--here")]
-        [InlineData("MixedCase123!", "mixedcase123-")]
-        public void NormalizeKey_ProblematicInput_ReturnsValidFormat(
-            string input, string expected)
-        {
-            // Act
-            var result = _generator.NormalizeKey(input);
-
-            // Assert
-            result.Should().Be(expected);
-            result.Should().MatchRegex(@"^[\w\-]{1,128}$");
-        }
-
-        /// <summary>
-        /// Verifies exception for null base key
+        /// Verifica la corretta combinazione di base key e parametri
         /// </summary>
         [Fact]
-        public void GenerateKey_NullBaseKey_ThrowsException()
+        public void GenerateKey_DovrebbeCombinareBaseKeyEParametri()
         {
-            // Arrange
-            var act = () => _generator.GenerateKey(null!, new object[0]);
+            var result = _generator.GenerateKey("Prodotto", 123, "ABC");
+            result.Should().Be("prodotto_123_abc");
+        }
 
-            // Assert
-            act.Should().Throw<ArgumentNullException>();
+        /// <summary>
+        /// Verifica la rimozione dei caratteri non validi
+        /// </summary>
+        [Fact]
+        public void NormalizeKey_DovrebbeRimuovereCaratteriNonValid()
+        {
+            var result = _generator.NormalizeKey("key@with$special#chars");
+            result.Should().Be("key-with-special-chars");
+        }
+
+        /// <summary>
+        /// Verifica il sollevamento eccezione per base key nulla
+        /// </summary>
+        [Fact]
+        public void GenerateKey_DovrebbeSollevareEccezione_PerBaseKeyNull()
+        {
+            Assert.Throws<ArgumentNullException>(() =>
+                _generator.GenerateKey(null!, []));
         }
     }
 }

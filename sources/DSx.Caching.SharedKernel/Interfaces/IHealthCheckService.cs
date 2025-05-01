@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace DSx.Caching.SharedKernel.HealthChecks
+namespace DSx.Caching.SharedKernel.Interfaces
 {
     /// <summary>
     /// Servizio per il monitoraggio dello stato dei componenti

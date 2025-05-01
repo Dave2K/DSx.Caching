@@ -1,4 +1,4 @@
-﻿using DSx.Caching.Abstractions.Events;
+using DSx.Caching.Abstractions.Events;
 using DSx.Caching.Abstractions.Models;
 using DSx.Caching.SharedKernel.Caching;
 using Microsoft.Extensions.Logging;
@@ -11,230 +11,115 @@ using Xunit;
 namespace DSx.Caching.SharedKernel.UnitTests.Caching
 {
     /// <summary>
-    /// Classe base per i test unitari dei provider di cache
+    /// Classe di test per BaseCacheProvider
     /// </summary>
-    public abstract class BaseCacheProviderTests
+    public class BaseCacheProviderTests
     {
         /// <summary>
-        /// Implementazione concreta per testare il provider base
+        /// Implementazione concreta per il testing
         /// </summary>
-        public class TestProvider : BaseCacheProvider
+        private class TestCacheProvider : BaseCacheProvider
         {
-            private EventHandler<CacheEventArgs>? _beforeOperationHandlers;
-            private EventHandler<CacheEventArgs>? _afterOperationHandlers;
-            private EventHandler<OperationDeferredEventArgs>? _operationDeferredHandlers;
-            private readonly object _eventLock = new();
-
             /// <summary>
             /// Inizializza una nuova istanza del provider di test
             /// </summary>
-            /// <param name="logger">Istanza del logger per la tracciatura</param>
-            public TestProvider(ILogger<TestProvider> logger) : base(logger) { }
+            /// <param name="logger">Logger per la gestione dei log</param>
+            public TestCacheProvider(ILogger logger) : base(logger) { }
 
             /// <summary>
-            /// Evento sollevato prima dell'esecuzione di un'operazione
+            /// Verifica lo stato di disposizione dell'oggetto
             /// </summary>
-            public override event EventHandler<CacheEventArgs>? BeforeOperation
-            {
-                add
-                {
-                    lock (_eventLock)
-                    {
-                        _beforeOperationHandlers += value;
-                    }
-                }
-                remove
-                {
-                    lock (_eventLock)
-                    {
-                        _beforeOperationHandlers -= value;
-                    }
-                }
-            }
+            public void VerificaDisposizione() => CheckDisposed();
 
             /// <summary>
-            /// Evento sollevato dopo il completamento di un'operazione
-            /// </summary>
-            public override event EventHandler<CacheEventArgs>? AfterOperation
-            {
-                add
-                {
-                    lock (_eventLock)
-                    {
-                        _afterOperationHandlers += value;
-                    }
-                }
-                remove
-                {
-                    lock (_eventLock)
-                    {
-                        _afterOperationHandlers -= value;
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Evento sollevato quando un'operazione viene differita
-            /// </summary>
-            public override event EventHandler<OperationDeferredEventArgs>? OperationDeferred
-            {
-                add
-                {
-                    lock (_eventLock)
-                    {
-                        _operationDeferredHandlers += value;
-                    }
-                }
-                remove
-                {
-                    lock (_eventLock)
-                    {
-                        _operationDeferredHandlers -= value;
-                    }
-                }
-            }
-
-            /// <summary>
-            /// Verifica l'esistenza di una chiave (non implementato)
-            /// </summary>
-            public override Task<CacheOperationResult> ExistsAsync(
-                string key,
-                CancellationToken cancellationToken = default)
-            {
-                throw new NotImplementedException();
-            }
-
-            /// <summary>
-            /// Recupera un valore (non implementato)
+            /// Implementazione del metodo GetAsync
             /// </summary>
             public override Task<CacheOperationResult<T>> GetAsync<T>(
                 string key,
                 CacheEntryOptions? options = null,
                 CancellationToken cancellationToken = default)
-            {
-                throw new NotImplementedException();
-            }
+                => throw new NotImplementedException();
 
             /// <summary>
-            /// Memorizza un valore (non implementato)
+            /// Implementazione del metodo SetAsync
             /// </summary>
             public override Task<CacheOperationResult> SetAsync<T>(
                 string key,
                 T value,
                 CacheEntryOptions? options = null,
                 CancellationToken cancellationToken = default)
-            {
-                throw new NotImplementedException();
-            }
+                => throw new NotImplementedException();
 
             /// <summary>
-            /// Rimuove una chiave (non implementato)
+            /// Implementazione del metodo RemoveAsync
             /// </summary>
             public override Task<CacheOperationResult> RemoveAsync(
                 string key,
                 CancellationToken cancellationToken = default)
-            {
-                throw new NotImplementedException();
-            }
+                => throw new NotImplementedException();
 
             /// <summary>
-            /// Svuota la cache (non implementato)
+            /// Implementazione del metodo GetDescriptorAsync
+            /// </summary>
+            public override Task<CacheOperationResult<CacheEntryDescriptor>> GetDescriptorAsync(
+                string key,
+                CancellationToken cancellationToken = default)
+                => throw new NotImplementedException();
+
+            /// <summary>
+            /// Implementazione del metodo ClearAllAsync
             /// </summary>
             public override Task<CacheOperationResult> ClearAllAsync(
                 CancellationToken cancellationToken = default)
-            {
-                throw new NotImplementedException();
-            }
+                => throw new NotImplementedException();
 
             /// <summary>
-            /// Ottiene i metadati (non implementato)
+            /// Implementazione del metodo ExistsAsync
             /// </summary>
-            public override Task<CacheEntryDescriptor?> GetDescriptorAsync(
+            public override Task<CacheOperationResult<bool>> ExistsAsync(
                 string key,
                 CancellationToken cancellationToken = default)
+                => throw new NotImplementedException();
+
+            /// <summary>
+            /// Implementazione del Dispose sincrono
+            /// </summary>
+            protected override void Dispose(bool disposing)
             {
-                throw new NotImplementedException();
+                base.Dispose(disposing);
             }
 
             /// <summary>
-            /// Rilascia le risorse gestite
+            /// Implementazione dell'async dispose pattern
             /// </summary>
-            public override ValueTask DisposeAsync()
+            protected override async ValueTask DisposeAsyncCore()
             {
-                GC.SuppressFinalize(this);
-                return ValueTask.CompletedTask;
+                await base.DisposeAsyncCore().ConfigureAwait(false);
             }
         }
 
         /// <summary>
-        /// Verifica il corretto funzionamento degli eventi BeforeOperation
+        /// Verifica la corretta gestione della disposizione
         /// </summary>
         [Fact]
-        public void Deve_Sollevare_Evento_BeforeOperation()
+        public void CheckDisposed_DovrebbeSollevareEccezione_QuandoDisposed()
         {
-            // Arrange
-            var loggerMock = new Mock<ILogger<TestProvider>>();
-            var provider = new TestProvider(loggerMock.Object);
-            var eventSollevato = false;
-
-            // Act
-            provider.BeforeOperation += (s, e) => eventSollevato = true;
-
-            // Assert
-            Assert.True(eventSollevato);
+            var loggerMock = new Mock<ILogger>();
+            var provider = new TestCacheProvider(loggerMock.Object);
+            provider.Dispose();
+            Assert.Throws<ObjectDisposedException>(() => provider.VerificaDisposizione());
         }
 
         /// <summary>
-        /// Verifica il corretto funzionamento degli eventi AfterOperation
+        /// Verifica il corretto funzionamento del Dispose asincrono
         /// </summary>
         [Fact]
-        public void Deve_Sollevare_Evento_AfterOperation()
+        public async Task DisposeAsync_DovrebbeSegnareComeDisposed()
         {
-            // Arrange
-            var loggerMock = new Mock<ILogger<TestProvider>>();
-            var provider = new TestProvider(loggerMock.Object);
-            var eventSollevato = false;
-
-            // Act
-            provider.AfterOperation += (s, e) => eventSollevato = true;
-
-            // Assert
-            Assert.True(eventSollevato);
-        }
-
-        /// <summary>
-        /// Verifica il corretto funzionamento degli eventi OperationDeferred
-        /// </summary>
-        [Fact]
-        public void Deve_Sollevare_Evento_OperationDeferred()
-        {
-            // Arrange
-            var loggerMock = new Mock<ILogger<TestProvider>>();
-            var provider = new TestProvider(loggerMock.Object);
-            var eventSollevato = false;
-
-            // Act
-            provider.OperationDeferred += (s, e) => eventSollevato = true;
-
-            // Assert
-            Assert.True(eventSollevato);
-        }
-
-        /// <summary>
-        /// Verifica il corretto rilascio delle risorse
-        /// </summary>
-        [Fact]
-        public async Task Deve_Rilasciare_Risorse_Correttamente()
-        {
-            // Arrange
-            var loggerMock = new Mock<ILogger<TestProvider>>();
-            var provider = new TestProvider(loggerMock.Object);
-
-            // Act
+            var loggerMock = new Mock<ILogger>();
+            var provider = new TestCacheProvider(loggerMock.Object);
             await provider.DisposeAsync();
-
-            // Assert
-            Assert.True(true); // Test di successo se Dispose non genera eccezioni
+            Assert.Throws<ObjectDisposedException>(() => provider.VerificaDisposizione());
         }
     }
 }

@@ -1,63 +1,257 @@
-using DSx.Caching.Abstractions.Events;
-using DSx.Caching.Abstractions.Interfaces;
-using DSx.Caching.Abstractions.Models;
-using DSx.Caching.SharedKernel.Caching;
-using DSx.Caching.SharedKernel.Validation;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+using DSx.Caching.Abstractions.Events;
+using DSx.Caching.Abstractions.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using DSx.Caching.Abstractions.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace DSx.Caching.Providers.Memory
 {
     /// <summary>
-    /// Fornitore di cache in memoria che implementa <see cref="ICacheProvider"/> utilizzando <see cref="IMemoryCache"/>.
-    /// Gestisce operazioni thread-safe e tracciamento eventi.
+    /// Fornitore di cache in memoria che implementa l'interfaccia <see cref="ICacheProvider"/>.
+    /// Gestisce la memorizzazione dei dati e le operazioni thread-safe con lock dedicati.
     /// </summary>
-    public sealed class MemoryCacheProvider : BaseCacheProvider
+    public sealed class MemoryCacheProvider : ICacheProvider, IDisposable, IAsyncDisposable
     {
         private readonly IMemoryCache _cache;
-        private readonly ICacheKeyValidator _keyValidator;
-        private readonly MemoryCacheEntryOptions _defaultOptions;
-        private readonly SemaphoreSlim _cacheLock = new(1, 1);
+        private readonly ConcurrentDictionary<string, CacheEntryMetadata> _metadata = new();
+        private readonly ConcurrentDictionary<string, SemaphoreSlim> _keyLocks = new();
+        private readonly ILogger<MemoryCacheProvider> _logger;
+        private bool _disposed;
 
         /// <summary>
         /// Evento sollevato prima di un'operazione sulla cache.
         /// </summary>
-        public override event EventHandler<CacheEventArgs>? BeforeOperation;
+        public event EventHandler<CacheEventArgs>? BeforeOperation;
 
         /// <summary>
         /// Evento sollevato dopo un'operazione sulla cache.
         /// </summary>
-        public override event EventHandler<CacheEventArgs>? AfterOperation;
-
-        /// <summary>
-        /// Evento sollevato quando un'operazione viene differita (es. rimozione per scadenza).
-        /// </summary>
-        public override event EventHandler<OperationDeferredEventArgs>? OperationDeferred;
+        public event EventHandler<CacheEventArgs>? AfterOperation;
 
         /// <summary>
         /// Inizializza una nuova istanza della classe <see cref="MemoryCacheProvider"/>.
         /// </summary>
-        /// <param name="cache">Istanza configurata di <see cref="IMemoryCache"/>.</param>
-        /// <param name="logger">Logger per tracciamento attività.</param>
-        /// <param name="keyValidator">Servizio per la validazione delle chiavi.</param>
-        /// <param name="defaultExpiration">Scadenza predefinita sliding (opzionale).</param>
-        /// <exception cref="ArgumentNullException">Se <paramref name="cache"/> o <paramref name="keyValidator"/> sono null.</exception>
+        /// <param name="cache">Istanza di IMemoryCache.</param>
+        /// <param name="logger">Logger per tracciare le operazioni.</param>
         public MemoryCacheProvider(
             IMemoryCache cache,
-            ILogger<MemoryCacheProvider> logger,
-            ICacheKeyValidator keyValidator,
-            TimeSpan? defaultExpiration = null) : base(logger)
+            ILogger<MemoryCacheProvider> logger)
         {
             _cache = cache ?? throw new ArgumentNullException(nameof(cache));
-            _keyValidator = keyValidator ?? throw new ArgumentNullException(nameof(keyValidator));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
 
-            _defaultOptions = new MemoryCacheEntryOptions()
-                .SetSlidingExpiration(defaultExpiration ?? TimeSpan.FromMinutes(30));
+        /// <summary>
+        /// Recupera un elemento dalla cache.
+        /// </summary>
+        /// <typeparam name="T">Tipo dell'elemento.</typeparam>
+        /// <param name="key">Chiave di identificazione.</param>
+        /// <param name="options">Opzioni di cache (opzionali).</param>
+        /// <param name="cancellationToken">Token per annullamento operazione.</param>
+        /// <returns>Risultato dell'operazione con il valore trovato.</returns>
+        public async Task<CacheOperationResult<T>> GetAsync<T>(
+            string key,
+            CacheEntryOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Get));
 
-            _defaultOptions.RegisterPostEvictionCallback(EvictionCallback);
+            try
+            {
+                var keyLock = _keyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+                await keyLock.WaitAsync(cancellationToken);
+
+                try
+                {
+                    if (_cache.TryGetValue(key, out T? value) && value != null)
+                    {
+                        if (options?.SlidingExpiration != null)
+                        {
+                            _cache.Set(key, value, new MemoryCacheEntryOptions
+                            {
+                                SlidingExpiration = options.SlidingExpiration
+                            });
+                        }
+
+                        UpdateLastAccess(key);
+                        AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Get, true));
+                        return new CacheOperationResult<T>(value, CacheOperationStatus.Success);
+                    }
+
+                    _logger.LogWarning("Chiave {Key} non trovata nella cache", key);
+                    return new CacheOperationResult<T>(
+                        default!,
+                        CacheOperationStatus.NotFound,
+                        "Chiave non trovata");
+                }
+                finally
+                {
+                    keyLock.Release();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero della chiave {Key}", key);
+                return new CacheOperationResult<T>(
+                    default!,
+                    CacheOperationStatus.ConnectionError,
+                    ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Inserisce o aggiorna un elemento nella cache.
+        /// </summary>
+        /// <typeparam name="T">Tipo dell'elemento.</typeparam>
+        /// <param name="key">Chiave di identificazione.</param>
+        /// <param name="value">Valore da memorizzare.</param>
+        /// <param name="options">Opzioni di cache (opzionali).</param>
+        /// <param name="cancellationToken">Token per annullamento operazione.</param>
+        /// <returns>Risultato dell'operazione.</returns>
+        public async Task<CacheOperationResult> SetAsync<T>(
+            string key,
+            T value,
+            CacheEntryOptions? options = null,
+            CancellationToken cancellationToken = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Set));
+
+            try
+            {
+                var keyLock = _keyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+                await keyLock.WaitAsync(cancellationToken);
+
+                try
+                {
+                    var entryOptions = new MemoryCacheEntryOptions
+                    {
+                        AbsoluteExpirationRelativeToNow = options?.AbsoluteExpiration,
+                        SlidingExpiration = options?.SlidingExpiration
+                    };
+
+                    _cache.Set(key, value, entryOptions);
+
+                    _metadata[key] = new CacheEntryMetadata(
+                        DateTime.UtcNow,
+                        options?.AbsoluteExpiration,
+                        options?.SlidingExpiration);
+
+                    AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Set, true));
+                    return new CacheOperationResult(CacheOperationStatus.Success);
+                }
+                finally
+                {
+                    keyLock.Release();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il salvataggio della chiave {Key}", key);
+                return new CacheOperationResult(
+                    CacheOperationStatus.ConnectionError,
+                    ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Rimuove un elemento dalla cache.
+        /// </summary>
+        /// <param name="key">Chiave di identificazione.</param>
+        /// <param name="cancellationToken">Token per annullamento operazione.</param>
+        /// <returns>Risultato dell'operazione.</returns>
+        public async Task<CacheOperationResult> RemoveAsync(
+            string key,
+            CancellationToken cancellationToken = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Remove));
+
+            try
+            {
+                var keyLock = _keyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+                await keyLock.WaitAsync(cancellationToken);
+
+                try
+                {
+                    _cache.Remove(key);
+                    _metadata.TryRemove(key, out _);
+                    _keyLocks.TryRemove(key, out _);
+
+                    AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Remove, true));
+                    return new CacheOperationResult(CacheOperationStatus.Success);
+                }
+                finally
+                {
+                    keyLock.Release();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante la rimozione della chiave {Key}", key);
+                return new CacheOperationResult(
+                    CacheOperationStatus.ConnectionError,
+                    ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Recupera i metadati di una voce della cache.
+        /// </summary>
+        /// <param name="key">Chiave di identificazione.</param>
+        /// <param name="cancellationToken">Token per annullamento operazione.</param>
+        /// <returns>Descrittore della voce di cache.</returns>
+        public async Task<CacheOperationResult<CacheEntryDescriptor>> GetDescriptorAsync(
+            string key,
+            CancellationToken cancellationToken = default)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.GetMetadata));
+
+            try
+            {
+                var keyLock = _keyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+                await keyLock.WaitAsync(cancellationToken);
+
+                try
+                {
+                    if (!_metadata.TryGetValue(key, out var metadata))
+                    {
+                        return new CacheOperationResult<CacheEntryDescriptor>(
+                            default!,
+                            CacheOperationStatus.NotFound,
+                            "Chiave non trovata");
+                    }
+
+                    var descriptor = new CacheEntryDescriptor(
+                        key,
+                        metadata.CreatedAt,
+                        metadata.LastAccess,
+                        metadata.AbsoluteExpiration,
+                        metadata.SlidingExpiration,
+                        0);
+
+                    AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.GetMetadata, true));
+                    return new CacheOperationResult<CacheEntryDescriptor>(descriptor, CacheOperationStatus.Success);
+                }
+                finally
+                {
+                    keyLock.Release();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore durante il recupero dei metadati per {Key}", key);
+                return new CacheOperationResult<CacheEntryDescriptor>(
+                    default!,
+                    CacheOperationStatus.ConnectionError,
+                    ex.Message);
+            }
         }
 
         /// <summary>
@@ -65,349 +259,131 @@ namespace DSx.Caching.Providers.Memory
         /// </summary>
         /// <param name="key">Chiave da verificare.</param>
         /// <param name="cancellationToken">Token per annullamento operazione.</param>
-        /// <returns>Risultato dell'operazione con stato.</returns>
-        public override async Task<CacheOperationResult> ExistsAsync(
+        /// <returns>True se la chiave esiste, altrimenti false.</returns>
+        public async Task<CacheOperationResult<bool>> ExistsAsync(
             string key,
             CancellationToken cancellationToken = default)
         {
-            await _cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Exists));
+
             try
             {
-                CheckDisposed();
-                BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Exists));
+                var keyLock = _keyLocks.GetOrAdd(key, _ => new SemaphoreSlim(1, 1));
+                await keyLock.WaitAsync(cancellationToken);
 
-                _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var exists = _cache.TryGetValue(key, out _);
-                AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Exists, exists));
-
-                return new CacheOperationResult
+                try
                 {
-                    Status = exists ? CacheOperationStatus.Success : CacheOperationStatus.NotFound
-                };
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogWarning("Operazione annullata per la chiave {Key}", key);
-                return new CacheOperationResult { Status = CacheOperationStatus.OperationCancelled };
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Errore durante la verifica della chiave {Key}", key);
-                return new CacheOperationResult { Status = CacheOperationStatus.ConnectionError };
-            }
-            finally
-            {
-                _cacheLock.Release();
-            }
-        }
-
-        /// <summary>
-        /// Recupera un valore dalla cache.
-        /// </summary>
-        /// <typeparam name="T">Tipo del valore atteso.</typeparam>
-        /// <param name="key">Chiave da recuperare.</param>
-        /// <param name="options">Opzioni di cache (ignorate in questa implementazione).</param>
-        /// <param name="cancellationToken">Token per annullamento operazione.</param>
-        /// <returns>Risultato con valore o errore.</returns>
-        public override async Task<CacheOperationResult<T>> GetAsync<T>(
-            string key,
-            CacheEntryOptions? options = null,
-            CancellationToken cancellationToken = default)
-        {
-            await _cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
-            {
-                CheckDisposed();
-                BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Get));
-
-                _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (!_cache.TryGetValue(key, out CacheEntryWrapper? wrapper) || wrapper == null)
-                {
-                    AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Get, false));
-                    return new CacheOperationResult<T> { Status = CacheOperationStatus.NotFound };
+                    var exists = _cache.TryGetValue(key, out _);
+                    AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Exists, exists));
+                    return new CacheOperationResult<bool>(exists, CacheOperationStatus.Success);
                 }
-
-                if (wrapper.Value is T typedValue)
+                finally
                 {
-                    wrapper.UpdateOnRead();
-                    AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Get, true));
-                    return new CacheOperationResult<T> { Status = CacheOperationStatus.Success, Value = typedValue };
+                    keyLock.Release();
                 }
-
-                Logger.LogError("Tipo non compatibile per la chiave {Key}", key);
-                return new CacheOperationResult<T>
-                {
-                    Status = CacheOperationStatus.SerializationError,
-                    Details = $"Tipo atteso: {typeof(T).Name}, Tipo effettivo: {wrapper.Value.GetType().Name}"
-                };
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogWarning("Operazione annullata per la chiave {Key}", key);
-                return new CacheOperationResult<T> { Status = CacheOperationStatus.OperationCancelled };
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante il recupero della chiave {Key}", key);
-                return new CacheOperationResult<T> { Status = CacheOperationStatus.ConnectionError };
-            }
-            finally
-            {
-                _cacheLock.Release();
+                _logger.LogError(ex, "Errore durante la verifica della chiave {Key}", key);
+                return new CacheOperationResult<bool>(
+                    false,
+                    CacheOperationStatus.ConnectionError,
+                    ex.Message);
             }
         }
 
         /// <summary>
-        /// Memorizza un valore nella cache.
-        /// </summary>
-        /// <typeparam name="T">Tipo del valore da memorizzare.</typeparam>
-        /// <param name="key">Chiave associata al valore.</param>
-        /// <param name="value">Valore da memorizzare.</param>
-        /// <param name="options">Opzioni di scadenza e priorità.</param>
-        /// <param name="cancellationToken">Token per annullamento operazione.</param>
-        /// <returns>Risultato dell'operazione.</returns>
-        public override async Task<CacheOperationResult> SetAsync<T>(
-            string key,
-            T value,
-            CacheEntryOptions? options = null,
-            CancellationToken cancellationToken = default)
-        {
-            await _cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
-            {
-                CheckDisposed();
-                BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Set));
-
-                _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var entryOptions = options != null ? CreateMemoryCacheEntryOptions(options) : _defaultOptions;
-                var wrapper = new CacheEntryWrapper(value!, CalculateSize(value));
-                _cache.Set(key, wrapper, entryOptions);
-
-                AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Set, true));
-                return new CacheOperationResult { Status = CacheOperationStatus.Success };
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogWarning("Operazione annullata per la chiave {Key}", key);
-                return new CacheOperationResult { Status = CacheOperationStatus.OperationCancelled };
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Errore durante il salvataggio della chiave {Key}", key);
-                return new CacheOperationResult { Status = CacheOperationStatus.ConnectionError };
-            }
-            finally
-            {
-                _cacheLock.Release();
-            }
-        }
-
-        /// <summary>
-        /// Rimuove una chiave dalla cache.
-        /// </summary>
-        /// <param name="key">Chiave da rimuovere.</param>
-        /// <param name="cancellationToken">Token per annullamento operazione.</param>
-        /// <returns>Risultato dell'operazione.</returns>
-        public override async Task<CacheOperationResult> RemoveAsync(
-            string key,
-            CancellationToken cancellationToken = default)
-        {
-            await _cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
-            {
-                CheckDisposed();
-                BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Remove));
-
-                _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
-
-                _cache.Remove(key);
-                AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.Remove, true));
-                return new CacheOperationResult { Status = CacheOperationStatus.Success };
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogWarning("Operazione annullata per la chiave {Key}", key);
-                return new CacheOperationResult { Status = CacheOperationStatus.OperationCancelled };
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Errore durante la rimozione della chiave {Key}", key);
-                return new CacheOperationResult { Status = CacheOperationStatus.ConnectionError };
-            }
-            finally
-            {
-                _cacheLock.Release();
-            }
-        }
-
-        /// <summary>
-        /// Svuota completamente il contenuto della cache.
+        /// Svuota completamente la cache.
         /// </summary>
         /// <param name="cancellationToken">Token per annullamento operazione.</param>
         /// <returns>Risultato dell'operazione.</returns>
-        public override async Task<CacheOperationResult> ClearAllAsync(
+        public async Task<CacheOperationResult> ClearAllAsync(
             CancellationToken cancellationToken = default)
         {
-            await _cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            BeforeOperation?.Invoke(this, new CacheEventArgs("ALL", CacheOperationType.ClearAll));
+
             try
             {
-                CheckDisposed();
-                BeforeOperation?.Invoke(this, new CacheEventArgs("ALL_KEYS", CacheOperationType.ClearAll));
-
-                if (_cache is MemoryCache memoryCache)
+                foreach (var key in _keyLocks.Keys)
                 {
-                    memoryCache.Compact(1.0);
-                    AfterOperation?.Invoke(this, new CacheEventArgs("ALL_KEYS", CacheOperationType.ClearAll, true));
-                    return new CacheOperationResult { Status = CacheOperationStatus.Success };
+                    await RemoveAsync(key, cancellationToken);
                 }
 
-                return new CacheOperationResult { Status = CacheOperationStatus.ValidationError };
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogWarning("Operazione annullata per lo svuotamento della cache");
-                return new CacheOperationResult { Status = CacheOperationStatus.OperationCancelled };
+                AfterOperation?.Invoke(this, new CacheEventArgs("ALL", CacheOperationType.ClearAll, true));
+                return new CacheOperationResult(CacheOperationStatus.Success);
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Errore durante lo svuotamento della cache");
-                return new CacheOperationResult { Status = CacheOperationStatus.ConnectionError };
-            }
-            finally
-            {
-                _cacheLock.Release();
+                _logger.LogError(ex, "Errore durante lo svuotamento della cache");
+                return new CacheOperationResult(
+                    CacheOperationStatus.ConnectionError,
+                    ex.Message);
             }
         }
 
         /// <summary>
-        /// Ottiene i metadati di una voce della cache.
+        /// Rilascia le risorse non gestite.
         /// </summary>
-        /// <param name="key">Chiave da interrogare.</param>
-        /// <param name="cancellationToken">Token per annullamento operazione.</param>
-        /// <returns>Descrittore della voce o null se non esiste.</returns>
-        public override async Task<CacheEntryDescriptor?> GetDescriptorAsync(
-            string key,
-            CancellationToken cancellationToken = default)
+        public void Dispose()
         {
-            await _cacheLock.WaitAsync(cancellationToken).ConfigureAwait(false);
-            try
-            {
-                CheckDisposed();
-                BeforeOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.GetMetadata));
+            if (_disposed) return;
 
-                _keyValidator.Validate(key);
-                cancellationToken.ThrowIfCancellationRequested();
+            _cache.Dispose();
+            foreach (var lockObj in _keyLocks.Values)
+            {
+                lockObj.Dispose();
+            }
+            _keyLocks.Clear();
+            _disposed = true;
+            GC.SuppressFinalize(this);
+        }
 
-                if (!_cache.TryGetValue(key, out CacheEntryWrapper? wrapper) || wrapper == null)
-                    return null;
+        /// <summary>
+        /// Rilascia le risorse non gestite in modo asincrono.
+        /// </summary>
+        public async ValueTask DisposeAsync()
+        {
+            if (_disposed) return;
 
-                return new CacheEntryDescriptor(
-                    key: key,
-                    lastAccessed: wrapper.LastAccessed,
-                    readCount: wrapper.ReadCount,
-                    sizeInBytes: wrapper.SizeInBytes,
-                    isDirty: wrapper.IsDirty
-                );
-            }
-            catch (OperationCanceledException)
+            if (_cache is IAsyncDisposable asyncDisposable)
             {
-                Logger.LogWarning("Operazione annullata per la chiave {Key}", key);
-                return null;
+                await asyncDisposable.DisposeAsync();
             }
-            catch (Exception ex)
+            else
             {
-                Logger.LogError(ex, "Errore durante il recupero dei metadati per {Key}", key);
-                return null;
+                _cache.Dispose();
             }
-            finally
+
+            foreach (var lockObj in _keyLocks.Values)
             {
-                _cacheLock.Release();
-                AfterOperation?.Invoke(this, new CacheEventArgs(key, CacheOperationType.GetMetadata));
+                lockObj.Dispose();
             }
+            _keyLocks.Clear();
+
+            _disposed = true;
+            GC.SuppressFinalize(this);
         }
 
         #region Metodi Privati
-        private static long CalculateSize<T>(T value)
+        private void UpdateLastAccess(string key)
         {
-            return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(value).Length;
-        }
-
-        private MemoryCacheEntryOptions CreateMemoryCacheEntryOptions(CacheEntryOptions? options)
-        {
-            var entryOptions = new MemoryCacheEntryOptions();
-            if (options?.AbsoluteExpiration != null)
-                entryOptions.SetAbsoluteExpiration(options.AbsoluteExpiration.Value);
-            if (options?.SlidingExpiration != null)
-                entryOptions.SetSlidingExpiration(options.SlidingExpiration.Value);
-            entryOptions.RegisterPostEvictionCallback(EvictionCallback);
-            return entryOptions;
-        }
-
-        private void EvictionCallback(object key, object? value, EvictionReason reason, object? state)
-        {
-            if (value is CacheEntryWrapper wrapper)
+            if (_metadata.TryGetValue(key, out var metadata))
             {
-                Logger.LogInformation(
-                    "Elemento rimosso: {Key}. Motivo: {Reason} - Ultimo accesso: {LastAccess}",
-                    key, reason, wrapper.LastAccessed
-                );
-                OperationDeferred?.Invoke(this, new OperationDeferredEventArgs(
-                    key.ToString() ?? string.Empty,
-                    reason.ToString()
-                ));
+                _metadata[key] = metadata.WithLastAccess(DateTime.UtcNow);
             }
         }
         #endregion
 
-        #region Classe Interna
-        private class CacheEntryWrapper(object value, long initialSize)
+        #region Record Interni
+        private record CacheEntryMetadata(
+            DateTime CreatedAt,
+            TimeSpan? AbsoluteExpiration,
+            TimeSpan? SlidingExpiration)
         {
-            public DateTime LastAccessed { get; private set; } = DateTime.UtcNow;
-            public int ReadCount { get; private set; }
-            public long SizeInBytes { get; private set; } = initialSize;
-            public bool IsDirty { get; private set; } = true;
-            public object Value { get; } = value ?? throw new ArgumentNullException(nameof(value));
-
-            public void UpdateOnRead()
-            {
-                ReadCount++;
-                LastAccessed = DateTime.UtcNow;
-            }
-
-            public void UpdateOnWrite(long newSize)
-            {
-                SizeInBytes = newSize;
-                IsDirty = true;
-                LastAccessed = DateTime.UtcNow;
-            }
-
-            public void MarkAsClean()
-            {
-                IsDirty = false;
-            }
-        }
-        #endregion
-
-        #region IDisposable
-        /// <summary>
-        /// Rilascia le risorse gestite (cache e semaforo).
-        /// </summary>
-        /// <param name="disposing">True se chiamato esplicitamente, false se da finalizzatore.</param>
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                _cache.Dispose();
-                _cacheLock.Dispose();
-            }
-            base.Dispose(disposing);
+            public DateTime LastAccess { get; private init; } = CreatedAt;
+            public CacheEntryMetadata WithLastAccess(DateTime lastAccess) => this with { LastAccess = lastAccess };
         }
         #endregion
     }

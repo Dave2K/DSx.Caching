@@ -36,12 +36,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{EEE8154A-3
 		docs\tree.txt = docs\tree.txt
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_ROOT", "_ROOT", "{1A39BBD0-2F64-4FB4-A96D-1E15D4E49239}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{1A39BBD0-2F64-4FB4-A96D-1E15D4E49239}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
-		Directory.Build copy props = Directory.Build copy props
-		Directory.Build copy targets = Directory.Build copy targets
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
 		Directory.Packages.props = Directory.Packages.props
@@ -52,6 +50,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_ROOT", "_ROOT", "{1A39BBD0
 		TestDependencies.props = TestDependencies.props
 		version.json = version.json
 		WSEnvironment.template = WSEnvironment.template
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "resources", "resources", "{63181089-2375-49FF-9ACA-E0DC37EBF8B3}"
+	ProjectSection(SolutionItems) = preProject
+		resources\TestSetting.json = resources\TestSetting.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{05C51479-96B8-482C-AA7D-AE55BC931CCD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hooks", "hooks", "{C5F7B410-4F85-435B-B7FB-860162C18EC9}"
+	ProjectSection(SolutionItems) = preProject
+		.github\hooks\pre-commit = .github\hooks\pre-commit
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{9EBDCA48-E1D1-4EF3-B5C1-17FE9ECA725F}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\ci.yml = .github\workflows\ci.yml
 	EndProjectSection
 EndProject
 Global
@@ -120,6 +135,8 @@ Global
 		{10AAE329-FF07-EEC0-1044-B3C57C6C2F08} = {6C83A596-D32D-B35F-00DD-F0C99B673980}
 		{ACBFA6D1-4C13-1090-A2D5-8D38533A054E} = {6C83A596-D32D-B35F-00DD-F0C99B673980}
 		{870DFE4B-795A-17D0-4D58-C671BC56D13F} = {6C83A596-D32D-B35F-00DD-F0C99B673980}
+		{C5F7B410-4F85-435B-B7FB-860162C18EC9} = {05C51479-96B8-482C-AA7D-AE55BC931CCD}
+		{9EBDCA48-E1D1-4EF3-B5C1-17FE9ECA725F} = {05C51479-96B8-482C-AA7D-AE55BC931CCD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {84E61796-2385-4C3A-892A-A27C00500B01}

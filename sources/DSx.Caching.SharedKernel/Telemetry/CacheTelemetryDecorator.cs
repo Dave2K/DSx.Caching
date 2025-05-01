@@ -1,67 +1,56 @@
-﻿using DSx.Caching.Abstractions;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using DSx.Caching.Abstractions;
 using DSx.Caching.Abstractions.Events;
 using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Abstractions.Models;
 using DSx.Caching.Abstractions.Telemetry;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace DSx.Caching.SharedKernel.Telemetry
 {
     /// <summary>
-    /// Decoratore per il tracciamento telemetrico delle operazioni di cache
+    /// Decoratore per aggiungere telemetria alle operazioni della cache
     /// </summary>
-    public class CacheTelemetryDecorator : ICacheProvider, IDisposable
+    public class CacheTelemetryDecorator : ICacheProvider, IAsyncDisposable, IDisposable
     {
         private readonly ICacheProvider _inner;
         private readonly ICacheTelemetry _telemetry;
         private readonly ILogger<CacheTelemetryDecorator> _logger;
+        private bool _disposed;
 
         /// <summary>
-        /// Inizializza una nuova istanza del decoratore
+        /// Costruttore principale
         /// </summary>
         public CacheTelemetryDecorator(
             ICacheProvider inner,
             ICacheTelemetry telemetry,
             ILogger<CacheTelemetryDecorator> logger)
         {
-            _inner = inner ?? throw new ArgumentNullException(nameof(inner));
-            _telemetry = telemetry ?? throw new ArgumentNullException(nameof(telemetry));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _inner = inner;
+            _telemetry = telemetry;
+            _logger = logger;
+
+            _inner.BeforeOperation += OnBeforeOperation;
+            _inner.AfterOperation += OnAfterOperation;
         }
 
         /// <summary>
         /// Evento sollevato prima di un'operazione sulla cache
         /// </summary>
-        public event EventHandler<CacheEventArgs>? BeforeOperation
-        {
-            add => _inner.BeforeOperation += value;
-            remove => _inner.BeforeOperation -= value;
-        }
+        public event EventHandler<CacheEventArgs>? BeforeOperation;
 
         /// <summary>
         /// Evento sollevato dopo un'operazione sulla cache
         /// </summary>
-        public event EventHandler<CacheEventArgs>? AfterOperation
-        {
-            add => _inner.AfterOperation += value;
-            remove => _inner.AfterOperation -= value;
-        }
+        public event EventHandler<CacheEventArgs>? AfterOperation;
 
         /// <summary>
-        /// Evento sollevato per operazioni differite
+        /// Esegue un'operazione di recupero dalla cache con tracciatura telemetria
         /// </summary>
-        public event EventHandler<OperationDeferredEventArgs>? OperationDeferred
-        {
-            add => _inner.OperationDeferred += value;
-            remove => _inner.OperationDeferred -= value;
-        }
-
-        /// <summary>
-        /// Recupera un valore dalla cache
-        /// </summary>
+        /// <typeparam name="T">Tipo del dato da recuperare</typeparam>
         public async Task<CacheOperationResult<T>> GetAsync<T>(
             string key,
             CacheEntryOptions? options = null,
@@ -83,8 +72,9 @@ namespace DSx.Caching.SharedKernel.Telemetry
         }
 
         /// <summary>
-        /// Memorizza un valore nella cache
+        /// Esegue un'operazione di salvataggio nella cache con tracciatura telemetria
         /// </summary>
+        /// <typeparam name="T">Tipo del dato da salvare</typeparam>
         public async Task<CacheOperationResult> SetAsync<T>(
             string key,
             T value,
@@ -107,29 +97,7 @@ namespace DSx.Caching.SharedKernel.Telemetry
         }
 
         /// <summary>
-        /// Verifica l'esistenza di una chiave
-        /// </summary>
-        public async Task<CacheOperationResult> ExistsAsync(
-            string key,
-            CancellationToken cancellationToken = default)
-        {
-            var startTime = DateTimeOffset.UtcNow;
-            try
-            {
-                var result = await _inner.ExistsAsync(key, cancellationToken);
-                TrackDependency("Exists", key, result.Status == CacheOperationStatus.Success, startTime);
-                return result;
-            }
-            catch (Exception ex)
-            {
-                LogError("EXISTS", key, ex);
-                TrackDependency("Exists", key, false, startTime);
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Rimuove una voce dalla cache
+        /// Esegue un'operazione di rimozione dalla cache con tracciatura telemetria
         /// </summary>
         public async Task<CacheOperationResult> RemoveAsync(
             string key,
@@ -151,7 +119,7 @@ namespace DSx.Caching.SharedKernel.Telemetry
         }
 
         /// <summary>
-        /// Svuota completamente la cache
+        /// Esegue la pulizia completa della cache con tracciatura telemetria
         /// </summary>
         public async Task<CacheOperationResult> ClearAllAsync(
             CancellationToken cancellationToken = default)
@@ -172,9 +140,31 @@ namespace DSx.Caching.SharedKernel.Telemetry
         }
 
         /// <summary>
-        /// Ottiene i metadati di una voce
+        /// Verifica l'esistenza di una chiave nella cache con tracciatura telemetria
         /// </summary>
-        public async Task<CacheEntryDescriptor?> GetDescriptorAsync(
+        public async Task<CacheOperationResult<bool>> ExistsAsync(
+            string key,
+            CancellationToken cancellationToken = default)
+        {
+            var startTime = DateTimeOffset.UtcNow;
+            try
+            {
+                var result = await _inner.ExistsAsync(key, cancellationToken);
+                TrackDependency("Exists", key, result.Status == CacheOperationStatus.Success, startTime);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                LogError("EXISTS", key, ex);
+                TrackDependency("Exists", key, false, startTime);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Recupera i metadati di una voce della cache con tracciatura telemetria
+        /// </summary>
+        public async Task<CacheOperationResult<CacheEntryDescriptor>> GetDescriptorAsync(
             string key,
             CancellationToken cancellationToken = default)
         {
@@ -182,7 +172,7 @@ namespace DSx.Caching.SharedKernel.Telemetry
             try
             {
                 var result = await _inner.GetDescriptorAsync(key, cancellationToken);
-                TrackDependency("GetDescriptor", key, result != null, startTime);
+                TrackDependency("GetDescriptor", key, result.Status == CacheOperationStatus.Success, startTime);
                 return result;
             }
             catch (Exception ex)
@@ -194,24 +184,83 @@ namespace DSx.Caching.SharedKernel.Telemetry
         }
 
         /// <summary>
-        /// Rilascia le risorse gestite
+        /// Implementazione dello smaltimento sincrono delle risorse
         /// </summary>
         public void Dispose()
         {
-            _inner.Dispose();
+            Dispose(true);
             GC.SuppressFinalize(this);
         }
 
         /// <summary>
-        /// Rilascia le risorse gestite in modo asincrono
+        /// Implementazione dello smaltimento asincrono delle risorse
         /// </summary>
         public async ValueTask DisposeAsync()
         {
-            await _inner.DisposeAsync();
+            await DisposeAsyncCore().ConfigureAwait(false);
+            Dispose(false);
             GC.SuppressFinalize(this);
         }
 
-        private void TrackDependency(string operation, string key, bool success, DateTimeOffset startTime)
+        /// <summary>
+        /// Logica centrale di smaltimento sincrono
+        /// </summary>
+        /// <param name="disposing">Indica se è in corso uno smaltimento esplicito</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                _inner.BeforeOperation -= OnBeforeOperation;
+                _inner.AfterOperation -= OnAfterOperation;
+
+                if (_inner is IDisposable disposable)
+                {
+                    disposable.Dispose();
+                }
+            }
+
+            _disposed = true;
+        }
+
+        /// <summary>
+        /// Logica centrale di smaltimento asincrono
+        /// </summary>
+        protected virtual async ValueTask DisposeAsyncCore()
+        {
+            if (_disposed) return;
+
+            _inner.BeforeOperation -= OnBeforeOperation;
+            _inner.AfterOperation -= OnAfterOperation;
+
+            if (_inner is IAsyncDisposable asyncDisposable)
+            {
+                await asyncDisposable.DisposeAsync().ConfigureAwait(false);
+            }
+            else if (_inner is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
+
+            _disposed = true;
+        }
+
+        private void OnBeforeOperation(object? sender, CacheEventArgs args)
+        {
+            BeforeOperation?.Invoke(this, args);
+        }
+
+        private void OnAfterOperation(object? sender, CacheEventArgs args)
+        {
+            AfterOperation?.Invoke(this, args);
+        }
+
+        private void TrackDependency(
+            string operation,
+            string key,
+            bool success,
+            DateTimeOffset startTime)
         {
             _telemetry.TrackDependency(
                 "Cache",
@@ -225,6 +274,11 @@ namespace DSx.Caching.SharedKernel.Telemetry
         private void LogError(string operation, string key, Exception ex)
         {
             _logger.LogError(ex, "Errore durante {Operation} per {Key}", operation, key);
+            _telemetry.TrackException(ex, new Dictionary<string, object>
+            {
+                ["Operation"] = operation,
+                ["Key"] = key
+            });
         }
     }
 }

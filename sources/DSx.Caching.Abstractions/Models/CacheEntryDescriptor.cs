@@ -1,75 +1,101 @@
-﻿using System;
+using System;
 
 namespace DSx.Caching.Abstractions.Models
 {
     /// <summary>
-    /// Rappresenta i metadati di una voce nella cache.
+    /// Descrive i metadati di una voce nella cache
     /// </summary>
     public class CacheEntryDescriptor
     {
         /// <summary>
-        /// Chiave identificativa della voce nella cache.
+        /// Ottiene la chiave della voce nella cache
         /// </summary>
         public string Key { get; }
 
         /// <summary>
-        /// Data e ora dell'ultimo accesso alla voce.
+        /// Ottiene la data di creazione della voce
         /// </summary>
-        public DateTime LastAccessed { get; internal set; }
+        public DateTime CreatedAt { get; }
 
         /// <summary>
-        /// Numero totale di letture effettuate.
+        /// Ottiene o imposta l'ultima data di accesso
         /// </summary>
-        public int ReadCount { get; internal set; }
+        public DateTime LastAccessed { get; private set; }
 
         /// <summary>
-        /// Dimensione occupata in memoria (in byte).
+        /// Ottiene la scadenza assoluta della voce
         /// </summary>
-        public long SizeInBytes { get; internal set; }
+        public TimeSpan? AbsoluteExpiration { get; }
 
         /// <summary>
-        /// Indica se la voce ha modifiche non salvate.
+        /// Ottiene la scadenza relativa della voce
         /// </summary>
-        public bool IsDirty { get; internal set; }
+        public TimeSpan? SlidingExpiration { get; }
 
         /// <summary>
-        /// Inizializza una nuova istanza della classe CacheEntryDescriptor.
+        /// Ottiene o imposta la dimensione in byte
         /// </summary>
+        public long SizeInBytes { get; private set; }
+
+        /// <summary>
+        /// Indica se la voce è stata modificata
+        /// </summary>
+        public bool IsDirty { get; private set; }
+
+        /// <summary>
+        /// Contatore degli accessi in lettura
+        /// </summary>
+        public int ReadCount { get; private set; }
+
+        /// <summary>
+        /// Inizializza una nuova istanza della classe CacheEntryDescriptor
+        /// </summary>
+        /// <param name="key">Chiave della voce</param>
+        /// <param name="createdAt">Data di creazione</param>
+        /// <param name="lastAccessed">Ultimo accesso</param>
+        /// <param name="absoluteExpiration">Scadenza assoluta</param>
+        /// <param name="slidingExpiration">Scadenza relativa</param>
+        /// <param name="sizeInBytes">Dimensione in byte</param>
         public CacheEntryDescriptor(
             string key,
+            DateTime createdAt,
             DateTime lastAccessed,
-            int readCount,
-            long sizeInBytes,
-            bool isDirty)
+            TimeSpan? absoluteExpiration,
+            TimeSpan? slidingExpiration,
+            long sizeInBytes)
         {
-            Key = key ?? throw new ArgumentNullException(nameof(key));
+            Key = key;
+            CreatedAt = createdAt;
             LastAccessed = lastAccessed;
-            ReadCount = readCount;
+            AbsoluteExpiration = absoluteExpiration;
+            SlidingExpiration = slidingExpiration;
             SizeInBytes = sizeInBytes;
-            IsDirty = isDirty;
+            IsDirty = false;
+            ReadCount = 0;
         }
 
         /// <summary>
-        /// Aggiorna i metadati dopo una lettura.
+        /// Aggiorna i metadati dopo una lettura
         /// </summary>
         public void UpdateOnRead()
         {
-            ReadCount++;
             LastAccessed = DateTime.UtcNow;
+            ReadCount++;
         }
 
         /// <summary>
-        /// Aggiorna i metadati dopo una scrittura.
+        /// Aggiorna i metadati dopo una scrittura
         /// </summary>
+        /// <param name="newSize">Nuova dimensione in byte</param>
         public void UpdateOnWrite(long newSize)
         {
+            LastAccessed = DateTime.UtcNow;
             SizeInBytes = newSize;
             IsDirty = true;
-            LastAccessed = DateTime.UtcNow;
         }
 
         /// <summary>
-        /// Contrassegna la voce come pulita.
+        /// Contrassegna la voce come pulita
         /// </summary>
         public void MarkAsClean()
         {

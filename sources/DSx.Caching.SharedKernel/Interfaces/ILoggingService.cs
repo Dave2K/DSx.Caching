@@ -1,6 +1,6 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 
-namespace DSx.Caching.SharedKernel.Logging
+namespace DSx.Caching.SharedKernel.Interfaces
 {
     /// <summary>
     /// Servizio di logging centralizzato con funzionalità enterprise

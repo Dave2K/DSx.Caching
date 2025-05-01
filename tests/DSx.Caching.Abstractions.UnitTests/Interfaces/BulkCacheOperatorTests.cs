@@ -1,4 +1,4 @@
-﻿using DSx.Caching.Abstractions.Interfaces;
+using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Abstractions.Models;
 using FluentAssertions;
 using Moq;
@@ -9,80 +9,109 @@ using Xunit;
 namespace DSx.Caching.Abstractions.UnitTests.Interfaces
 {
     /// <summary>
-    /// Contiene i test unitari per verificare il comportamento dell'interfaccia <see cref="IBulkCacheOperator"/>.
+    /// Test per verificare le operazioni bulk su cache.
     /// </summary>
     public class BulkCacheOperatorTests
     {
-        private readonly Mock<IBulkCacheOperator> _mockOperator = new();
-        private static readonly string[] TestKeys = ["key1", "key_missing"];
+        private readonly Mock<IBulkCacheOperator> _mockBulkOperator = new();
+        private readonly Dictionary<string, string> _testItems = new()
+        {
+            {"chiave1", "valore1"},
+            {"chiave2", "valore2"},
+            {"chiave3", "valore3"}
+        };
 
         /// <summary>
-        /// Verifica che il metodo BulkSetAsync elabori correttamente un dizionario di elementi.
+        /// Verifica che BulkSetAsync inserisca correttamente più elementi.
         /// </summary>
-        /// <returns>Task asincrono.</returns>
         [Fact]
-        public async Task BulkSetAsync_DovrebbeElaborareDizionario()
+        public async Task BulkSetAsync_DovrebbeInserireMultipliElementi()
         {
             // Arrange
-            var items = new Dictionary<string, object>
-            {
-                ["key1"] = "value1",
-                ["key2"] = "value2"
-            };
-
-            _mockOperator.Setup(x => x.BulkSetAsync(
-                It.IsAny<IDictionary<string, object>>(),
-                It.IsAny<CacheEntryOptions?>()))
-                .Returns(Task.CompletedTask);
+            _mockBulkOperator
+                .Setup(x => x.BulkSetAsync<string>(
+                    It.IsAny<IDictionary<string, string>>(),
+                    It.IsAny<CacheEntryOptions?>()))
+                .Returns(Task.FromResult(new CacheOperationResult(CacheOperationStatus.Success)));
 
             // Act
-            await _mockOperator.Object.BulkSetAsync(items);
+            CacheOperationResult result = await _mockBulkOperator.Object.BulkSetAsync(_testItems);
 
             // Assert
-            _mockOperator.Verify(x => x.BulkSetAsync(
-                items,
-                It.IsAny<CacheEntryOptions?>()),
-                Times.Once);
+            result.Status.Should().Be(CacheOperationStatus.Success);
+            _mockBulkOperator.Verify(x =>
+                x.BulkSetAsync<string>(_testItems, It.IsAny<CacheEntryOptions?>()), Times.Once);
         }
 
         /// <summary>
-        /// Verifica che il metodo BulkGetAsync restituisca solo le chiavi esistenti.
+        /// Verifica che BulkGetAsync recuperi elementi esistenti.
         /// </summary>
-        /// <returns>Task asincrono.</returns>
         [Fact]
-        public async Task BulkGetAsync_DovrebbeFiltrareChiaviMancanti()
+        public async Task BulkGetAsync_DovrebbeRecuperareElementiEsistenti()
         {
             // Arrange
-            var expected = new Dictionary<string, object> { ["key1"] = "value1" };
-            _mockOperator.Setup(x => x.BulkGetAsync<object>(
-                It.IsAny<IEnumerable<string>>()))
-                .ReturnsAsync(expected);
+            var keys = new List<string> { "chiave1", "chiave2" };
+            _mockBulkOperator
+                .Setup(x => x.BulkGetAsync<string>(keys))
+                .ReturnsAsync(new Dictionary<string, string>
+                {
+                    {"chiave1", "valore1"},
+                    {"chiave2", "valore2"}
+                });
 
             // Act
-            var result = await _mockOperator.Object.BulkGetAsync<object>(TestKeys);
+            IDictionary<string, string> result = await _mockBulkOperator.Object.BulkGetAsync<string>(keys);
 
             // Assert
-            result.Should()
-                .HaveCount(1)
-                .And.ContainKey("key1")
-                .And.NotContainKey("key_missing");
+            result.Should().HaveCount(2);
+            result["chiave1"].Should().Be("valore1");
         }
 
         /// <summary>
-        /// Verifica che BulkSetAsync sollevi eccezione con dizionario null.
+        /// Verifica il comportamento con collezione vuota.
         /// </summary>
         [Fact]
-        public async Task BulkSetAsync_DovrebbeSollevareEccezione_PerDizionarioNull()
+        public async Task BulkSetAsync_DovrebbeGestireCollezioneVuota()
         {
             // Arrange
-            _mockOperator.Setup(x => x.BulkSetAsync<object>(
-                null!,
-                It.IsAny<CacheEntryOptions?>()))
-                .ThrowsAsync(new ArgumentNullException());
+            var emptyItems = new Dictionary<string, string>();
+            _mockBulkOperator
+                .Setup(x => x.BulkSetAsync<string>(
+                    emptyItems,
+                    It.IsAny<CacheEntryOptions?>()))
+                .Returns(Task.FromResult(new CacheOperationResult(CacheOperationStatus.ValidationError)));
 
-            // Act & Assert
-            await Assert.ThrowsAsync<ArgumentNullException>(() =>
-                _mockOperator.Object.BulkSetAsync<object>(null!, null));
+            // Act
+            CacheOperationResult result = await _mockBulkOperator.Object.BulkSetAsync(emptyItems);
+
+            // Assert
+            result.Status.Should().Be(CacheOperationStatus.ValidationError);
+        }
+
+        /// <summary>
+        /// Verifica il fallimento con chiavi non valide.
+        /// </summary>
+        [Fact]
+        public async Task BulkSetAsync_DovrebbeFallirePerChiaviNonValide()
+        {
+            // Arrange
+            var invalidItems = new Dictionary<string, string> { { "chiave_invalida!", "valore" } };
+            _mockBulkOperator
+                .Setup(x => x.BulkSetAsync<string>(
+                    invalidItems,
+                    It.IsAny<CacheEntryOptions?>()))
+                .Returns(Task.FromResult(
+                    new CacheOperationResult(
+                        CacheOperationStatus.ValidationError,
+                        "Formato chiave non valido")
+                ));
+
+            // Act
+            CacheOperationResult result = await _mockBulkOperator.Object.BulkSetAsync(invalidItems);
+
+            // Assert
+            result.Status.Should().Be(CacheOperationStatus.ValidationError);
+            result.Details.Should().Contain("Formato chiave");
         }
     }
 }

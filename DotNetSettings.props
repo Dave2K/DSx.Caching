@@ -14,7 +14,7 @@
 	<!-- DOCUMENTAZIONE -->
 	<GenerateDocumentationFile>true</GenerateDocumentationFile>
 	<!-- Genera documentazione XML -->
-	<WarningsAsErrors>CS1591</WarningsAsErrors>
+	<WarningsAsErrors>nullable;CS1591</WarningsAsErrors>
 	<!-- Warning documentazione = errore -->
 
 	<!-- Analisi codice -->

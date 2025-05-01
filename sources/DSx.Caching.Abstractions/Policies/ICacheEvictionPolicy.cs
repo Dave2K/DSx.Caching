@@ -1,5 +1,4 @@
-﻿using DSx.Caching.Abstractions.Models;
-using System.Collections.Generic;
+using DSx.Caching.Abstractions.Models;
 
 namespace DSx.Caching.Abstractions.Policies
 {

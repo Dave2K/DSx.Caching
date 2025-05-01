@@ -1,28 +1,38 @@
-using DSx.Caching.Abstractions.Keys;
+using DSx.Caching.SharedKernel.Constants;
+using DSx.Caching.SharedKernel.Exceptions;
+using DSx.Caching.SharedKernel.Validation;
 using FluentAssertions;
 using Xunit;
 
-namespace DSx.Caching.Abstractions.UnitTests.Keys
+namespace DSx.Caching.SharedKernel.UnitTests.Keys
 {
     /// <summary>
-    /// Test per il generatore di chiavi di cache
+    /// Test per la generazione e validazione delle chiavi di cache
     /// </summary>
-    public class CacheKeyGeneratorTests
+    public class CacheKeyValidatorIntegrationTests
     {
-        private readonly DefaultCacheKeyGenerator _generator = new();
+        private readonly CacheKeyValidator _validator = new();
 
         /// <summary>
-        /// Verifica la corretta generazione di una chiave
+        /// Verifica il ciclo completo generazione-validazione-normalizzazione
         /// </summary>
         [Theory]
         [InlineData("Prodotto", new object[] { 123, "v2" }, "prodotto_123_v2")]
-        public void GenerateKey_DovrebbeProdurreChiaveValida(
+        public void FullKeyLifecycle_DovrebbeProdurreChiaveValida(
             string baseKey,
             object[] parameters,
             string expected)
         {
-            var result = _generator.GenerateKey(baseKey, parameters);
-            result.Should().Be(expected);
+            // Arrange
+            var rawKey = $"{baseKey}_{string.Join("_", parameters)}";
+
+            // Act
+            var normalizedKey = _validator.NormalizeKey(rawKey);
+            _validator.Validate(normalizedKey);
+
+            // Assert
+            normalizedKey.Should().Be(expected);
+            normalizedKey.Should().MatchRegex(CacheKeyConstants.KeyValidationPattern);
         }
     }
 }

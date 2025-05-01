@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 
-namespace DSx.Caching.Abstractions.Clustering
+namespace DSx.Caching.Abstractions.Interfaces
 {
     /// <summary>
     /// Definisce le operazioni per la gestione di un cluster di cache distribuite.

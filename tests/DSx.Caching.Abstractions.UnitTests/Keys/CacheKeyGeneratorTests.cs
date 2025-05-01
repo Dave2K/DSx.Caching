@@ -1,4 +1,4 @@
-﻿using DSx.Caching.Abstractions.Keys;
+using DSx.Caching.Abstractions.Interfaces;
 using FluentAssertions;
 using Moq;
 using Xunit;

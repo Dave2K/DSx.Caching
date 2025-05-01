@@ -14,8 +14,4 @@
 		<ProjectReference Include="..\DSx.Caching.Abstractions\DSx.Caching.Abstractions.csproj" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="Resiliency\" />
-	</ItemGroup>
-
 </Project>

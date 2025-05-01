@@ -1,4 +1,4 @@
-﻿using DSx.Caching.Abstractions.Exceptions;
+using DSx.Caching.Abstractions.Exceptions;
 using DSx.Caching.Abstractions.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;

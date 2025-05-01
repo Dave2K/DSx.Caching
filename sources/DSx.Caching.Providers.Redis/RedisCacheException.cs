@@ -1,36 +1,35 @@
-using DSx.Caching.SharedKernel.Enums;
-using Microsoft.Extensions.Logging;
+using DSx.Caching.Abstractions.Exceptions;
 using System;
+using System.Runtime.Serialization;
 
-namespace DSx.Caching.Providers.Redis
+namespace DSx.Caching.Providers.Redis // Namespace corretto
 {
     /// <summary>
-    /// Eccezione specifica per errori nel provider Redis
+    /// Eccezione sollevata per errori specifici di Redis durante le operazioni di caching
     /// </summary>
-    public class RedisCacheException : Exception
+    [Serializable]
+    public sealed class RedisCacheException : CacheException
     {
         /// <summary>
-        /// Dettagli tecnici dell'errore (NUOVA IMPLEMENTAZIONE)
+        /// Dettagli tecnici dell'errore (es. comando Redis, configurazione)
         /// </summary>
         public string TechnicalDetails { get; }
 
         /// <summary>
-        /// Crea una nuova istanza dell'eccezione
+        /// Inizializza una nuova istanza della classe RedisCacheException
         /// </summary>
+        /// <param name="message">Messaggio descrittivo dell'errore</param>
+        /// <param name="technicalDetails">Dettagli tecnici del contesto dell'errore</param>
+        /// <param name="errorCode">Codice identificativo univoco dell'errore</param>
+        /// <param name="innerException">Eccezione interna originale</param>
         public RedisCacheException(
-            ILogger<RedisCacheProvider> logger,
             string message,
             string technicalDetails,
-            Exception? inner = null)
-            : base(message, inner)
+            string errorCode = "REDIS_000",
+            Exception? innerException = null)
+            : base(message, errorCode, innerException)
         {
             TechnicalDetails = technicalDetails;
-
-            logger.LogError(
-                "Errore Redis: {Message}. Dettagli: {Details}",
-                message,
-                TechnicalDetails
-            );
         }
     }
 }

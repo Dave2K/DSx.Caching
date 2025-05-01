@@ -1,17 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<ItemGroup>
-	  <Compile Remove="Keys\**" />
-	  <EmbeddedResource Remove="Keys\**" />
-	  <None Remove="Keys\**" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Compile Include="Keys\DefaultCacheKeyGenerator.cs" />
-	  <Compile Include="Keys\ICacheKeyGenerator.cs" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
 	</ItemGroup>
 

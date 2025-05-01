@@ -1,4 +1,5 @@
-﻿using DSx.Caching.Abstractions.Events;
+using DSx.Caching.Abstractions;
+using DSx.Caching.Abstractions.Events;
 using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Abstractions.Models;
 using Microsoft.Extensions.Logging;
@@ -9,84 +10,52 @@ using System.Threading.Tasks;
 namespace DSx.Caching.SharedKernel.Caching
 {
     /// <summary>
-    /// Fornisce un'implementazione base astratta per i provider di cache
+    /// Fornisce un'implementazione base per i provider di cache con gestione completa del ciclo di vita
     /// </summary>
-    public abstract class BaseCacheProvider : ICacheProvider, IDisposable, IAsyncDisposable
+    public abstract class BaseCacheProvider(ILogger logger) : ICacheProvider, IAsyncDisposable, IDisposable
     {
+        /// <summary>
+        /// Flag che indica se l'istanza è stata disposed
+        /// </summary>
+        protected bool _disposed;
+
         /// <summary>
         /// Logger per la registrazione delle attività
         /// </summary>
-        protected readonly ILogger Logger;
-
-        private bool _disposed;
+        protected ILogger Logger { get; } = logger;
 
         /// <summary>
-        /// Evento sollevato prima dell'esecuzione di qualsiasi operazione sulla cache
+        /// Evento sollevato prima di un'operazione sulla cache
         /// </summary>
         public abstract event EventHandler<CacheEventArgs>? BeforeOperation;
 
         /// <summary>
-        /// Evento sollevato dopo il completamento di qualsiasi operazione sulla cache
+        /// Evento sollevato dopo un'operazione sulla cache
         /// </summary>
         public abstract event EventHandler<CacheEventArgs>? AfterOperation;
 
         /// <summary>
-        /// Evento sollevato quando un'operazione viene posticipata per motivi specifici
+        /// Recupera un elemento dalla cache
         /// </summary>
-        public abstract event EventHandler<OperationDeferredEventArgs>? OperationDeferred;
-
-        /// <summary>
-        /// Inizializza una nuova istanza della classe base per i provider di cache
-        /// </summary>
-        /// <param name="logger">Istanza del logger per la registrazione delle attività</param>
-        /// <exception cref="ArgumentNullException">Generato quando il logger è null</exception>
-        protected BaseCacheProvider(ILogger logger)
-        {
-            Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
-
-        /// <summary>
-        /// Verifica l'esistenza di una chiave nella cache
-        /// </summary>
-        /// <param name="key">Chiave da verificare</param>
-        /// <param name="cancellationToken">Token per annullamento operativo</param>
-        /// <returns>Risultato dell'operazione con stato e dettagli</returns>
-        public abstract Task<CacheOperationResult> ExistsAsync(
-            string key,
-            CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Recupera un valore dalla cache utilizzando la chiave specificata
-        /// </summary>
-        /// <typeparam name="T">Tipo del valore da recuperare</typeparam>
-        /// <param name="key">Chiave identificativa del valore</param>
+        /// <typeparam name="T">Tipo dell'oggetto da recuperare</typeparam>
+        /// <param name="key">Chiave identificativa dell'elemento</param>
         /// <param name="options">Opzioni aggiuntive per l'operazione</param>
-        /// <param name="cancellationToken">Token per annullamento operativo</param>
-        /// <returns>Risultato contenente il valore recuperato o errori</returns>
+        /// <param name="cancellationToken">Token per l'annullamento</param>
+        /// <returns>Risultato dell'operazione</returns>
         public abstract Task<CacheOperationResult<T>> GetAsync<T>(
             string key,
             CacheEntryOptions? options = null,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Ottiene i metadati tecnici di una voce della cache
+        /// Memorizza un elemento nella cache
         /// </summary>
-        /// <param name="key">Chiave identificativa della voce</param>
-        /// <param name="cancellationToken">Token per annullamento operativo</param>
-        /// <returns>Descrittore tecnico della voce o null se non presente</returns>
-        public abstract Task<CacheEntryDescriptor?> GetDescriptorAsync(
-            string key,
-            CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Memorizza un valore nella cache associandolo a una chiave
-        /// </summary>
-        /// <typeparam name="T">Tipo generico del valore da memorizzare</typeparam>
-        /// <param name="key">Chiave univoca per l'identificazione</param>
-        /// <param name="value">Valore da memorizzare nella cache</param>
-        /// <param name="options">Opzioni di configurazione per la memorizzazione</param>
-        /// <param name="cancellationToken">Token per annullamento operativo</param>
-        /// <returns>Risultato dell'operazione di memorizzazione</returns>
+        /// <typeparam name="T">Tipo dell'oggetto da memorizzare</typeparam>
+        /// <param name="key">Chiave identificativa</param>
+        /// <param name="value">Valore da memorizzare</param>
+        /// <param name="options">Opzioni di memorizzazione</param>
+        /// <param name="cancellationToken">Token per l'annullamento</param>
+        /// <returns>Risultato dell'operazione</returns>
         public abstract Task<CacheOperationResult> SetAsync<T>(
             string key,
             T value,
@@ -94,53 +63,73 @@ namespace DSx.Caching.SharedKernel.Caching
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Rimuove una voce specifica dalla cache
+        /// Rimuove un elemento dalla cache
         /// </summary>
-        /// <param name="key">Chiave della voce da rimuovere</param>
-        /// <param name="cancellationToken">Token per annullamento operativo</param>
-        /// <returns>Risultato dell'operazione di rimozione</returns>
+        /// <param name="key">Chiave dell'elemento da rimuovere</param>
+        /// <param name="cancellationToken">Token per l'annullamento</param>
+        /// <returns>Risultato dell'operazione</returns>
         public abstract Task<CacheOperationResult> RemoveAsync(
             string key,
             CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Svuota completamente il contenuto della cache
+        /// Recupera i metadati di un elemento nella cache
         /// </summary>
-        /// <param name="cancellationToken">Token per annullamento operativo</param>
-        /// <returns>Risultato dell'operazione di svuotamento</returns>
+        /// <param name="key">Chiave dell'elemento</param>
+        /// <param name="cancellationToken">Token per l'annullamento</param>
+        /// <returns>Descrizione dell'elemento</returns>
+        public abstract Task<CacheOperationResult<CacheEntryDescriptor>> GetDescriptorAsync(
+            string key,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Svuota completamente la cache
+        /// </summary>
+        /// <param name="cancellationToken">Token per l'annullamento</param>
+        /// <returns>Risultato dell'operazione</returns>
         public abstract Task<CacheOperationResult> ClearAllAsync(
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Verifica l'esistenza di una chiave nella cache
+        /// </summary>
+        /// <param name="key">Chiave da verificare</param>
+        /// <param name="cancellationToken">Token per l'annullamento</param>
+        /// <returns>Esito della verifica</returns>
+        public abstract Task<CacheOperationResult<bool>> ExistsAsync(
+            string key,
             CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Verifica lo stato di disposizione dell'oggetto
         /// </summary>
-        /// <exception cref="ObjectDisposedException">Generato se l'oggetto è già stato eliminato</exception>
-        protected void CheckDisposed()
-        {
-            if (_disposed)
-            {
-                throw new ObjectDisposedException(GetType().Name);
-            }
-        }
+        /// <exception cref="ObjectDisposedException">Se l'oggetto è già stato disposed</exception>
+        protected void CheckDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 
         /// <summary>
-        /// Esegue la disposizione delle risorse gestite
+        /// Esegue la pulizia delle risorse gestite
         /// </summary>
         /// <param name="disposing">Indica se la disposizione è esplicita</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!_disposed)
+            if (!_disposed && disposing)
             {
-                if (disposing)
-                {
-                    // Logica di pulizia per risorse gestite
-                }
-                _disposed = true;
+                // Pulizia risorse gestite
             }
+            _disposed = true;
         }
 
         /// <summary>
-        /// Implementazione dell'interfaccia IDisposable
+        /// Esegue la pulizia asincrona delle risorse
+        /// </summary>
+        protected virtual ValueTask DisposeAsyncCore()
+        {
+            Dispose(false);
+            return ValueTask.CompletedTask;
+        }
+
+        /// <summary>
+        /// Implementazione di IDisposable
         /// </summary>
         public void Dispose()
         {
@@ -149,13 +138,12 @@ namespace DSx.Caching.SharedKernel.Caching
         }
 
         /// <summary>
-        /// Implementazione dell'interfaccia IAsyncDisposable
+        /// Implementazione di IAsyncDisposable
         /// </summary>
-        public virtual ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            Dispose(true);
+            await DisposeAsyncCore().ConfigureAwait(false);
             GC.SuppressFinalize(this);
-            return ValueTask.CompletedTask;
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DSx.Caching.Abstractions.Interfaces;
+using DSx.Caching.Abstractions;
+using DSx.Caching.Abstractions.Interfaces;
 using DSx.Caching.Abstractions.Models;
 using Microsoft.Extensions.Logging;
 using System;
@@ -7,45 +8,47 @@ using System.Threading.Tasks;
 namespace DSx.Caching.SharedKernel.Caching
 {
     /// <summary>
-    /// Provides base functionality for cache management operations
+    /// Classe base per la gestione centralizzata delle operazioni di cache
     /// </summary>
-    /// <param name="logger">The logger instance</param>
-    /// <param name="cacheProvider">The cache provider instance</param>
-    public abstract class BaseCacheManager(ILogger logger, ICacheProvider cacheProvider)
+    public abstract class BaseCacheManager
     {
-        /// <summary>
-        /// The logger instance used for logging cache operations
-        /// </summary>
-        protected readonly ILogger Logger = logger;
+        private readonly ILogger _logger;
+        private readonly ICacheProvider _cacheProvider;
 
         /// <summary>
-        /// The cache provider instance used for performing cache operations
+        /// Costruttore principale
         /// </summary>
-        protected readonly ICacheProvider CacheProvider = cacheProvider;
+        protected BaseCacheManager(
+            ILogger logger,
+            ICacheProvider cacheProvider)
+        {
+            _logger = logger;
+            _cacheProvider = cacheProvider;
+        }
 
         /// <summary>
-        /// Generic retrieval operation with error handling
+        /// Esegue un'operazione generica con gestione centralizzata degli errori
         /// </summary>
-        /// <typeparam name="T">Type of cached value</typeparam>
-        /// <param name="key">Cache key</param>
-        /// <param name="operation">Cache operation to execute</param>
-        /// <returns>Cache operation result</returns>
-        protected virtual async Task<CacheOperationResult<T>> GetInternalAsync<T>(
+        /// <typeparam name="T">Tipo del dato restituito</typeparam>
+        protected virtual async Task<CacheOperationResult<T>> ExecuteOperationAsync<T>(
             string key,
             Func<Task<CacheOperationResult<T>>> operation)
         {
             try
             {
-                return await operation();
+                var result = await operation();
+                return new CacheOperationResult<T>(
+                    result.Value,
+                    result.Status,
+                    result.Details);
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Operation failed for key: {Key}", key);
-                return new CacheOperationResult<T>
-                {
-                    Status = CacheOperationStatus.ValidationError,
-                    Details = ex.Message
-                };
+                _logger.LogError(ex, "Operazione fallita per la chiave: {Key}", key);
+                return new CacheOperationResult<T>(
+                    default,
+                    CacheOperationStatus.ValidationError,
+                    ex.Message);
             }
         }
     }

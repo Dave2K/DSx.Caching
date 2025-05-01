@@ -1,6 +1,6 @@
-﻿using DSx.Caching.SharedKernel.Exceptions;
+using DSx.Caching.SharedKernel.Exceptions;
 
-namespace DSx.Caching.SharedKernel.Validation
+namespace DSx.Caching.SharedKernel.Interfaces
 {
     /// <summary>
     /// Definisce il contratto per i validatori di chiavi della cache

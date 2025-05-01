@@ -1,5 +1,4 @@
-﻿// File: DSx.Caching.SharedKernel/Resiliency/CacheCircuitBreaker.cs
-
+using DSx.Caching.SharedKernel.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading;
@@ -8,9 +7,9 @@ using System.Threading.Tasks;
 namespace DSx.Caching.SharedKernel.Resiliency
 {
     /// <summary>
-    /// Fornisce un meccanismo di Circuit Breaker per operazioni di cache
+    /// Implementa il pattern Circuit Breaker per gestire errori temporanei nelle operazioni di cache
     /// </summary>
-    public class CacheCircuitBreaker
+    public class CacheCircuitBreaker : ICacheCircuitBreaker
     {
         private readonly ILogger _logger;
         private readonly int _failureThreshold;
@@ -20,16 +19,16 @@ namespace DSx.Caching.SharedKernel.Resiliency
         private CircuitState _state = CircuitState.Closed;
 
         /// <summary>
-        /// Stato corrente del Circuit Breaker
+        /// Stato corrente del circuito
         /// </summary>
         public CircuitState State => _state;
 
         /// <summary>
-        /// Inizializza una nuova istanza del Circuit Breaker
+        /// Crea una nuova istanza del Circuit Breaker
         /// </summary>
         /// <param name="logger">Logger per tracciare gli eventi</param>
         /// <param name="failureThreshold">Numero massimo di fallimenti prima di aprire il circuito</param>
-        /// <param name="durationOfBreak">Durata dell'interruzione dopo il threshold</param>
+        /// <param name="durationOfBreak">Durata dell'apertura del circuito</param>
         public CacheCircuitBreaker(
             ILogger<CacheCircuitBreaker> logger,
             int failureThreshold = 5,
@@ -41,12 +40,12 @@ namespace DSx.Caching.SharedKernel.Resiliency
         }
 
         /// <summary>
-        /// Esegue un'operazione con gestione del fallimento
+        /// Esegue un'operazione con gestione degli errori tramite Circuit Breaker
         /// </summary>
         /// <typeparam name="T">Tipo del risultato</typeparam>
-        /// <param name="action">Operazione da eseguire</param>
-        /// <param name="fallbackAction">Azione di fallback</param>
-        /// <param name="cancellationToken">Token di cancellazione</param>
+        /// <param name="action">Operazione principale da eseguire</param>
+        /// <param name="fallbackAction">Azione di fallback da eseguire se il circuito è aperto</param>
+        /// <param name="cancellationToken">Token di annullamento</param>
         public async Task<T> ExecuteAsync<T>(
             Func<CancellationToken, Task<T>> action,
             Func<CancellationToken, Task<T>> fallbackAction,
@@ -101,11 +100,11 @@ namespace DSx.Caching.SharedKernel.Resiliency
     /// </summary>
     public enum CircuitState
     {
-        /// <summary>Operazioni permesse</summary>
+        /// <summary> Circuito chiuso (operativo) </summary>
         Closed,
-        /// <summary>Operazioni limitate</summary>
+        /// <summary> Circuito semi-aperto (in fase di test) </summary>
         HalfOpen,
-        /// <summary>Operazioni bloccate</summary>
+        /// <summary> Circuito aperto (bloccato) </summary>
         Open
     }
 }
